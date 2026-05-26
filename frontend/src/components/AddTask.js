@@ -1,0 +1,82 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+
+const AddTask = ({ projectId, onTaskAdded }) => {
+    const [titulli, setTitulli] = useState('');
+    const [pershkrimi, setPershkrimi] = useState('');
+    const [dataAfatit, setDataAfatit] = useState('');
+    const [labelId, setLabelId] = useState('');
+    const [prioriteti, setPrioriteti] = useState('Medium');
+    const [sprintId, setSprintId] = useState(''); 
+    const [labels, setLabels] = useState([]);
+    const [sprints, setSprints] = useState([]);
+
+    const token = localStorage.getItem('token');
+    const headers = { Authorization: `Bearer ${token}` };
+
+    useEffect(() => {
+        const fetchMetadata = async () => {
+            try {
+                const [resL, resS] = await Promise.all([
+                    axios.get('http://localhost:5000/api/labels', { headers }),
+                    axios.get(`http://localhost:5000/api/sprints/${projectId}`, { headers })
+                ]);
+                setLabels(Array.isArray(resL.data) ? resL.data : []);
+                setSprints(Array.isArray(resS.data) ? resS.data : []);
+            } catch (error) { console.error(error); }
+        };
+        fetchMetadata();
+    }, [projectId]);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            await axios.post('http://localhost:5000/api/tasks', {
+                project_id: Number(projectId), titulli, pershkrimi, sprint_id: sprintId || null,
+                data_afatit: dataAfatit, label_id: labelId || null, prioriteti, statusi: 'To Do'
+            }, { headers });
+            setTitulli(''); setPershkrimi(''); setDataAfatit(''); setLabelId(''); setSprintId('');
+            onTaskAdded(); 
+        } catch (error) { alert("❌ Gabim gjatë shtimit!"); }
+    };
+
+    return (
+        <div className="card shadow-sm border-0 mb-5 bg-white" style={{ borderRadius: '20px' }}>
+            <div className="card-body p-4">
+                <form onSubmit={handleSubmit} className="row g-3 align-items-end">
+                    <div className="col-md-2">
+                        <label className="fw-bold text-muted mb-2" style={{ fontSize: '10px' }}>TITULLI</label>
+                        <input type="text" className="form-control bg-light border-0 py-2" placeholder="Emri..." value={titulli} onChange={(e) => setTitulli(e.target.value)} required style={{ borderRadius: '10px', fontSize: '13px' }} />
+                    </div>
+                    <div className="col-md-3">
+                        <label className="fw-bold text-muted mb-2" style={{ fontSize: '10px' }}>PËRSHKRIMI</label>
+                        <input type="text" className="form-control bg-light border-0 py-2" placeholder="Detaje..." value={pershkrimi} onChange={(e) => setPershkrimi(e.target.value)} style={{ borderRadius: '10px', fontSize: '13px' }} />
+                    </div>
+                    <div className="col-md-2">
+                        <label className="fw-bold text-muted mb-2" style={{ fontSize: '10px' }}>ZGJIDH FAZËN</label>
+                        <select className="form-select bg-light border-0 py-2" value={sprintId} onChange={(e) => setSprintId(e.target.value)} style={{ borderRadius: '10px', fontSize: '13px' }}>
+                            <option value="">Pa fazë</option>
+                            {sprints.map(s => <option key={s.id} value={s.id}>{s.emertimi}</option>)}
+                        </select>
+                    </div>
+                    <div className="col-md-2">
+                        <label className="fw-bold text-muted mb-2" style={{ fontSize: '10px' }}>ETIKETA</label>
+                        <select className="form-select bg-light border-0 py-2" value={labelId} onChange={(e) => setLabelId(e.target.value)} style={{ borderRadius: '10px', fontSize: '13px' }}>
+                            <option value="">Pa</option>
+                            {labels.map(l => <option key={l.id} value={l.id}>{l.emertimi}</option>)}
+                        </select>
+                    </div>
+                    <div className="col-md-2">
+                        <label className="fw-bold text-muted mb-2" style={{ fontSize: '10px' }}>AFATI</label>
+                        <input type="date" className="form-control bg-light border-0 py-2" value={dataAfatit} onChange={(e) => setDataAfatit(e.target.value)} required style={{ borderRadius: '10px', fontSize: '13px' }} />
+                    </div>
+                    <div className="col-md-1">
+                        <button type="submit" className="btn btn-dark w-100 fw-bold py-2 shadow-sm" style={{ borderRadius: '10px' }}>+</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+export default AddTask;
