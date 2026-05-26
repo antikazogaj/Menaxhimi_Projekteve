@@ -48,8 +48,8 @@ router.post('/upload', verifyToken, upload.single('file'), async (req, res) => {
         }
 
         // Ruajmë informacionin në tabelën MySQL
-     const sql = "INSERT INTO task_attachments (task_id, emri_skedarit, rruga) VALUES (?, ?, ?)";
-     await db.query(sql, [task_id, req.file.originalname, req.file.filename]);
+    const sql = "INSERT INTO task_attachments (task_id, emri_skedarit, rruga) VALUES (?, ?, ?)";
+    await db.query(sql, [task_id, req.file.originalname, req.file.filename]);
 
         res.status(200).json({ 
             message: " Skedari u ngarkua me sukses!",

@@ -11,7 +11,11 @@ const Sidebar = () => {
         try {
             const base64Url = token.split('.');
             const base64 = base64Url[1].replace(/-/g, '+').replace(/_/g, '/');
-            user = JSON.parse(window.atob(base64));
+            const decoded = JSON.parse(window.atob(base64));
+            user = {
+                name: decoded.name || localStorage.getItem('userName') || "Shehida",
+                role: decoded.role || localStorage.getItem('role') || "Admin"
+            };
         } catch (e) { console.error("Token error"); }
     }
 
