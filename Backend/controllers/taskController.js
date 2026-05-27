@@ -25,7 +25,7 @@ const getProjectTasks = async (req, res) => {
     try {
         const { id } = req.params;
         const sql = `
-            SELECT t.*, l.emertimi as label_emertimi, l.ngjyra
+            SELECT t.*, l.emertimi as label_emertimi, l.ngjyra, l.id as label_id
             FROM tasks t
             LEFT JOIN task_labels tl ON t.id = tl.task_id
             LEFT JOIN labels l ON tl.label_id = l.id
@@ -94,6 +94,24 @@ const deleteTask = async (req, res) => {
     }
 };
 
+// 5b. Update Task Label
+const updateTaskLabel = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { label_id } = req.body;
+        
+        await db.query("DELETE FROM task_labels WHERE task_id = ?", [id]);
+        
+        if (label_id) {
+            await db.query("INSERT INTO task_labels (task_id, label_id) VALUES (?, ?)", [id, label_id]);
+        }
+        
+        res.status(200).json({ message: "Etiketa u përditësua!" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 // 6. Stats
 const getTaskStats = async (req, res) => {
     try {
@@ -104,4 +122,4 @@ const getTaskStats = async (req, res) => {
     }
 };
 
-module.exports = { getAllUserTasks, getProjectTasks, createTask, updateTaskStatus, deleteTask, getTaskStats };
+module.exports = { getAllUserTasks, getProjectTasks, createTask, updateTaskStatus, updateTaskLabel, deleteTask, getTaskStats };

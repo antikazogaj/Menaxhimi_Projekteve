@@ -24,5 +24,14 @@ router.post('/', verifyToken, async (req, res) => {
     }
 });
 
+// Fshi etiketë
+router.delete('/:id', verifyToken, async (req, res) => {
+    try {
+        await Label.delete(req.params.id);
+        res.status(200).json({ message: "Etiketa u fshi me sukses" });
+    } catch (err) {
+        res.status(500).json({ message: "Gabim gjatë fshirjes. Etiketa mund të jetë në përdorim." });
+    }
+});
 
 module.exports = router;

@@ -17,6 +17,9 @@ router.post('/', verifyToken, taskController.createTask);
 // URL: http://localhost:5000/api/tasks/ID_E_DETYRES
 router.put('/:id', verifyToken, taskController.updateTaskStatus);
 
+// 3b. Përditëso etiketën e detyrës (PUT)
+router.put('/:id/label', verifyToken, taskController.updateTaskLabel);
+
 // 4. Fshi një detyrë (DELETE)
 // URL: http://localhost:5000/api/tasks/ID_E_DETYRES
 router.delete('/:id', verifyToken, taskController.deleteTask);
