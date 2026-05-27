@@ -8,7 +8,7 @@ const AddSprint = ({ projectId, onSprintAdded }) => {
         e.preventDefault();
         const token = localStorage.getItem('token');
         try {
-            await axios.post('http://localhost:5000/api/sprints', {
+            await axios.post('http://localhost:5001/api/sprints', {
                 project_id: projectId,
                 emertimi: emertimi,
                 statusi: 'Active'

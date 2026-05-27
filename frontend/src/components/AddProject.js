@@ -10,7 +10,7 @@ const AddProject = ({ onProjectAdded }) => {
         e.preventDefault();
         const token = localStorage.getItem('token');
         try {
-            await axios.post('http://localhost:5000/api/projects', 
+            await axios.post('http://localhost:5001/api/projects', 
                 { emertimi, pershkrimi }, 
                 { headers: { Authorization: `Bearer ${token}` } }
             );

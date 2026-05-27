@@ -17,8 +17,8 @@ const Dashboard = () => {
     const fetchData = async () => {
         try {
             const [resP, resT] = await Promise.all([
-                axios.get('http://localhost:5000/api/projects', { headers }),
-                axios.get('http://localhost:5000/api/tasks/all/user', { headers }).catch(() => ({ data: [] }))
+                axios.get('http://localhost:5001/api/projects', { headers }),
+                axios.get('http://localhost:5001/api/tasks/all/user', { headers }).catch(() => ({ data: [] }))
             ]);
 
             const projectsData = Array.isArray(resP.data) ? resP.data : [];

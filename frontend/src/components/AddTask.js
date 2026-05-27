@@ -18,8 +18,8 @@ const AddTask = ({ projectId, onTaskAdded }) => {
         const fetchMetadata = async () => {
             try {
                 const [resL, resS] = await Promise.all([
-                    axios.get('http://localhost:5000/api/labels', { headers }),
-                    axios.get(`http://localhost:5000/api/sprints/${projectId}`, { headers })
+                    axios.get('http://localhost:5001/api/labels', { headers }),
+                    axios.get(`http://localhost:5001/api/sprints/${projectId}`, { headers })
                 ]);
                 setLabels(Array.isArray(resL.data) ? resL.data : []);
                 setSprints(Array.isArray(resS.data) ? resS.data : []);
@@ -31,7 +31,7 @@ const AddTask = ({ projectId, onTaskAdded }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:5000/api/tasks', {
+            await axios.post('http://localhost:5001/api/tasks', {
                 project_id: Number(projectId), titulli, pershkrimi, sprint_id: sprintId || null,
                 data_afatit: dataAfatit, label_id: labelId || null, prioriteti, statusi: 'To Do'
             }, { headers });

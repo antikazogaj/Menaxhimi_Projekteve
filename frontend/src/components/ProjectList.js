@@ -16,10 +16,10 @@ const ProjectList = () => {
 
     const fetchData = async () => {
         try {
-            const resProjects = await axios.get('http://localhost:5000/api/projects', { headers });
+            const resProjects = await axios.get('http://localhost:5001/api/projects', { headers });
             setProjects(Array.isArray(resProjects.data) ? resProjects.data : []);
 
-            const resStats = await axios.get('http://localhost:5000/api/tasks/all/stats', { headers });
+            const resStats = await axios.get('http://localhost:5001/api/tasks/all/stats', { headers });
             setStats({
                 totalTasks: (resStats.data.done || 0) + (resStats.data.pending || 0),
                 totalMembers: 5 
@@ -33,7 +33,7 @@ const ProjectList = () => {
     const handleCreateProject = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:5000/api/projects', newProject, { headers });
+            await axios.post('http://localhost:5001/api/projects', newProject, { headers });
             setShowModal(false);
             setNewProject({ emertimi: '', pershkrimi: '' });
             fetchData(); // Rifreskon listën
