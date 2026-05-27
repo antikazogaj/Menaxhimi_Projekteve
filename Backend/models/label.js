@@ -17,6 +17,8 @@ const Label = {
         return result.insertId;
     },
     delete: async (id) => {
+        // Fillimisht fshijmë lidhjet nga task_labels për të shmangur gabimin e Foreign Key
+        await db.query("DELETE FROM task_labels WHERE label_id = ?", [id]);
         await db.query("DELETE FROM labels WHERE id = ?", [id]);
     }
 };

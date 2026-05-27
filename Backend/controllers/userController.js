@@ -46,7 +46,8 @@ const register = async (req, res) => {
         await User.create({ name, email, password: hashedPassword, role: 'user' });
         res.status(201).json({ message: "U regjistruat me sukses!" });
     } catch (error) {
-        res.status(500).json({ message: "Gabim!", error: error.message });
+        console.error("GABIM NË REGJISTRIM:", error.message, error.stack);
+        res.status(500).json({ message: "Gabim: " + error.message });
     }
 };
 

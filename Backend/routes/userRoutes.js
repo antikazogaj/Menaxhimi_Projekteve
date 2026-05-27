@@ -13,11 +13,11 @@ router.post('/login', userController.login);
 router.get('/', verifyToken, userController.getUsers);
 
 // 4. Rruga për ndryshimin e rolit (Përdor ID-në e përdoruesit)
-// URL: http://localhost:5000/api/users/:id/role
+// URL: http://localhost:5001/api/users/:id/role
 router.put('/:id/role', verifyToken, userController.updateRole);
 
 // 5. Rruga për fshirjen e përdoruesit
-// URL: http://localhost:5000/api/users/:id
+// URL: http://localhost:5001/api/users/:id
 router.delete('/:id', verifyToken, userController.deleteUser);
 
 module.exports = router;
