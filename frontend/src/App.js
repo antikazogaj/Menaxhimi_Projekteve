@@ -26,7 +26,7 @@ function App() {
             <div className="d-flex">
               <Sidebar />
               {/* Pjesa e djathtë që ndryshon */}
-              <div style={{ marginLeft: '260px', width: '100%', minHeight: '100vh', backgroundColor: '#fdfdfd' }}>
+              <div style={{ marginLeft: '260px', width: '100%', minHeight: '100vh', backgroundColor: 'transparent' }}>
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/project/:id" element={<ProjectDetails />} />

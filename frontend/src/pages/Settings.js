@@ -29,7 +29,7 @@ const Settings = () => {
         try {
             await axios.post('http://localhost:5000/api/labels', { emertimi, ngjyra }, { headers });
             setEmertimi(''); setNgjyra('#000000'); fetchLabels();
-        } catch (e) { alert("Gabim gjatë shtimit!"); }
+        } catch (e) { alert("Gabim gjatë shtimit të etiketës!"); }
     };
 
     const handleDeleteLabel = async (id) => {
@@ -37,51 +37,59 @@ const Settings = () => {
         try {
             await axios.delete(`http://localhost:5000/api/labels/${id}`, { headers });
             fetchLabels();
-        } catch (e) { alert("Etiketa është në përdorim!"); }
+        } catch (e) { 
+            if (e.response && e.response.data && e.response.data.message) {
+                alert(e.response.data.message);
+            } else {
+                alert("Gabim gjatë fshirjes!");
+            }
+        }
     };
 
     return (
-        <div className="container mt-4 animate__animated animate__fadeIn pb-5">
-            <div className="mb-5">
-                <h2 className="fw-bold text-dark text-uppercase mb-1" style={{ letterSpacing: '1px' }}>Konfigurimet </h2>
-                <p className="text-muted small">Menaxho llogarinë dhe etiketat e sistemit</p>
+        <div className="page-container animate__animated animate__fadeIn">
+            <div className="d-flex justify-content-between align-items-center mb-5 pb-3 border-bottom" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+                <div>
+                    <h4 className="fw-bold m-0 text-uppercase" style={{ color: 'var(--text-main)', letterSpacing: '1px' }}>KONFIGURIMET</h4>
+                    <p className="small m-0 mt-1" style={{ color: 'var(--text-light)' }}>Menaxho llogarinë dhe etiketat e sistemit</p>
+                </div>
             </div>
 
             {/* SEKSIONI 1: PROFILI I PËRDORUESIT (LIGHT STYLE) */}
-            <div className="card shadow-sm border-0 p-4 mb-5" style={{ backgroundColor: '#ffffff', borderRadius: '20px', border: '1px solid #f0f0f0' }}>
+            <div className="premium-card p-4 mb-5">
                 <div className="row align-items-center">
                     <div className="col-md-2 text-center">
-                        <div className="bg-dark text-white rounded-circle d-inline-flex align-items-center justify-content-center fw-bold shadow-sm" style={{ width: '80px', height: '80px', fontSize: '30px' }}>
+                        <div className="text-white rounded-circle d-inline-flex align-items-center justify-content-center fw-bold shadow-sm" style={{ width: '80px', height: '80px', fontSize: '30px', background: 'linear-gradient(135deg, var(--primary), var(--accent))' }}>
                             {userName?.charAt(0).toUpperCase()}
                         </div>
                     </div>
                     <div className="col-md-6 border-start ps-4">
-                        <h4 className="text-dark fw-bold mb-1">{userName}</h4>
-                        <p className="text-muted mb-3">Roli: <span className="badge bg-light text-dark border px-3" style={{fontSize: '10px'}}>{userRole?.toUpperCase()}</span></p>
+                        <h4 className="fw-bold mb-1" style={{ color: 'var(--text-main)' }}>{userName}</h4>
+                        <p className="mb-3" style={{ color: 'var(--text-light)' }}>Roli: <span className="badge border px-3" style={{fontSize: '10px', color: 'var(--text-main)', background: 'rgba(255,255,255,0.1)', borderColor: 'rgba(255,255,255,0.1)'}}>{userRole?.toUpperCase()}</span></p>
                         <div className="d-flex gap-4">
                             <div>
-                                <small className="d-block text-muted text-uppercase fw-bold" style={{fontSize: '9px'}}>Statusi</small>
+                                <small className="d-block text-uppercase fw-bold" style={{fontSize: '9px', color: 'var(--text-muted)'}}>Statusi</small>
                                 <small className="text-success fw-bold">● AKTIV</small>
                             </div>
                             <div>
-                                <small className="d-block text-muted text-uppercase fw-bold" style={{fontSize: '9px'}}>Llogaria</small>
-                                <small className="text-dark">Personal Access</small>
+                                <small className="d-block text-uppercase fw-bold" style={{fontSize: '9px', color: 'var(--text-muted)'}}>Llogaria</small>
+                                <small style={{ color: 'var(--text-light)' }}>Personal Access</small>
                             </div>
                         </div>
                     </div>
                     <div className="col-md-4">
                         <form onSubmit={(e) => { e.preventDefault(); alert("U dërgua!"); setNewPassword(''); }}>
-                            <label className="text-muted small fw-bold mb-2" style={{fontSize: '10px'}}>NDRYSHO FJALËKALIMIN</label>
+                            <label className="small fw-bold mb-2" style={{fontSize: '10px', color: 'var(--text-light)'}}>NDRYSHO FJALËKALIMIN</label>
                             <div className="input-group">
                                 <input 
                                     type="password" 
-                                    className="form-control bg-light border-0" 
+                                    className="form-control border-0 text-white" 
                                     placeholder="Fjalëkalimi i ri..."
-                                    style={{ borderRadius: '10px 0 0 10px', fontSize: '13px' }}
+                                    style={{ borderRadius: '10px 0 0 10px', fontSize: '13px', background: 'rgba(0,0,0,0.2)' }}
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
                                 />
-                                <button className="btn btn-dark fw-bold px-3" style={{ borderRadius: '0 10px 10px 0', fontSize: '11px' }}>UPDATE</button>
+                                <button className="btn btn-premium px-4" style={{ borderRadius: '0 10px 10px 0', fontSize: '11px' }}>UPDATE</button>
                             </div>
                         </form>
                     </div>
@@ -91,23 +99,23 @@ const Settings = () => {
             <div className="row g-4">
                 {/* SEKSIONI 2: SHTO ETIKETË */}
                 <div className="col-md-5">
-                    <div className="card shadow-sm border-0 p-4 h-100" style={{ backgroundColor: '#ffffff', borderRadius: '20px', border: '1px solid #f0f0f0' }}>
-                        <h6 className="text-dark small text-uppercase fw-bold mb-4">Shto Etiketë të Re</h6>
+                    <div className="premium-card p-4 h-100">
+                        <h6 className="small text-uppercase fw-bold mb-4" style={{ color: 'var(--primary)', letterSpacing: '1px' }}>Shto Etiketë të Re</h6>
                         <form onSubmit={handleAddLabel}>
                             <div className="mb-3">
-                                <label className="text-muted small fw-bold mb-1" style={{fontSize: '10px'}}>EMËRTIMI</label>
+                                <label className="small fw-bold mb-1" style={{fontSize: '10px', color: 'var(--text-light)'}}>EMËRTIMI</label>
                                 <input 
                                     type="text" 
-                                    className="form-control bg-light border-0" 
-                                    style={{ borderRadius: '10px' }}
+                                    className="form-control border-0 text-white" 
+                                    style={{ borderRadius: '10px', background: 'rgba(0,0,0,0.2)' }}
                                     value={emertimi} 
                                     onChange={(e) => setEmertimi(e.target.value)} 
                                     required 
                                 />
                             </div>
                             <div className="mb-4">
-                                <label className="text-muted small fw-bold mb-1" style={{fontSize: '10px'}}>ZGJIDH NGJYRËN</label>
-                                <div className="d-flex align-items-center gap-3 bg-light p-2 rounded-3">
+                                <label className="small fw-bold mb-1" style={{fontSize: '10px', color: 'var(--text-light)'}}>ZGJIDH NGJYRËN</label>
+                                <div className="d-flex align-items-center gap-3 p-2 rounded-3" style={{ background: 'rgba(0,0,0,0.2)' }}>
                                     <input 
                                         type="color" 
                                         className="form-control form-control-color border-0 bg-transparent" 
@@ -115,23 +123,23 @@ const Settings = () => {
                                         value={ngjyra} 
                                         onChange={(e) => setNgjyra(e.target.value)} 
                                     />
-                                    <span className="text-muted small font-monospace">{ngjyra.toUpperCase()}</span>
+                                    <span className="small font-monospace" style={{ color: 'var(--text-main)' }}>{ngjyra.toUpperCase()}</span>
                                 </div>
                             </div>
-                            <button className="btn btn-dark w-100 fw-bold rounded-pill shadow-sm py-2" style={{fontSize: '11px'}}>RUHAJ ETIKETËN</button>
+                            <button className="btn btn-premium w-100 py-2" style={{fontSize: '11px', letterSpacing: '1px'}}>RUAJ ETIKETËN</button>
                         </form>
                     </div>
                 </div>
 
                 {/* SEKSIONI 3: LISTA E ETIKETAVE */}
                 <div className="col-md-7">
-                    <div className="card shadow-sm border-0 h-100" style={{ backgroundColor: '#ffffff', borderRadius: '20px', border: '1px solid #f0f0f0' }}>
+                    <div className="premium-card h-100">
                         <div className="p-4">
-                            <h6 className="text-dark small text-uppercase fw-bold mb-4">Menaxho Etiketat</h6>
+                            <h6 className="small text-uppercase fw-bold mb-4" style={{ color: 'var(--accent)', letterSpacing: '1px' }}>Menaxho Etiketat</h6>
                             <div className="table-responsive">
                                 <table className="table table-hover mb-0 align-middle">
                                     <thead>
-                                        <tr className="text-muted small text-uppercase" style={{fontSize: '10px', borderBottom: '1px solid #f8f9fa'}}>
+                                        <tr className="small text-uppercase" style={{fontSize: '10px', borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'var(--text-muted)'}}>
                                             <th className="py-3 border-0">Etiketa</th>
                                             <th className="py-3 text-center border-0">Mostra</th>
                                             <th className="py-3 text-end border-0">Veprimi</th>
@@ -139,7 +147,7 @@ const Settings = () => {
                                     </thead>
                                     <tbody>
                                         {labels.map(l => (
-                                            <tr key={l.id} style={{borderBottom: '1px solid #fcfcfc'}}>
+                                            <tr key={l.id} style={{borderBottom: '1px solid rgba(255,255,255,0.05)'}}>
                                                 <td className="py-3 border-0">
                                                     <span className="badge px-3 py-2" style={{ backgroundColor: l.ngjyra, color: '#fff', fontWeight: '700', fontSize: '10px', borderRadius: '6px' }}>
                                                         {l.emertimi.toUpperCase()}

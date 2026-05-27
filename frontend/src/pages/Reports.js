@@ -53,8 +53,8 @@ const Reports = () => {
         labels: ['Të Kryera', 'Në Proces'],
         datasets: [{
             data: [stats.done, stats.pending],
-            backgroundColor: ['#1a1a1a', '#e9ecef'],
-            borderColor: '#ffffff',
+            backgroundColor: ['var(--success)', 'rgba(255,255,255,0.1)'],
+            borderColor: 'rgba(255,255,255,0.1)',
             borderWidth: 2,
         }],
     };
@@ -62,13 +62,20 @@ const Reports = () => {
     if (loading) return <div className="p-5 text-center">Duke u ngarkuar...</div>;
 
     return (
-        <div className="container mt-4">
-            <h2 className="fw-bold text-dark text-uppercase mb-4">Raportet </h2>
+        <div className="page-container animate__animated animate__fadeIn">
+            <div className="d-flex justify-content-between align-items-center mb-5 pb-3 border-bottom" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+                <div>
+                    <h4 className="fw-bold m-0 text-uppercase" style={{ color: 'var(--text-main)', letterSpacing: '1px' }}>
+                        Raportet 
+                    </h4>
+                    <p className="small m-0 mt-1" style={{ color: 'var(--text-light)' }}>Shiko statistikat e detyrave tuaja</p>
+                </div>
+            </div>
 
             <div className="row g-4">
                 <div className="col-md-6">
-                    <div className="card shadow-sm border-0 p-4 h-100" style={{ borderRadius: '20px', backgroundColor: '#fff' }}>
-                        <h6 className="text-muted small text-uppercase fw-bold text-center mb-4">Statistikat Globale</h6>
+                    <div className="premium-card p-4 h-100">
+                        <h6 className="small text-uppercase fw-bold text-center mb-4" style={{ color: 'var(--primary)', letterSpacing: '1px' }}>Statistikat Globale</h6>
                         <div style={{ height: '280px', margin: '0 auto', width: '100%' }}>
                             {/* KETU NDODH NDRYSHIMI: Sido që të vijnë të dhënat, grafiku do të shfaqet */}
                             {total > 0 ? (
@@ -81,8 +88,8 @@ const Reports = () => {
                 </div>
 
                 <div className="col-md-6">
-                    <div className="card shadow-sm border-0 p-5 h-100 text-white" style={{ borderRadius: '20px', backgroundColor: '#1a1a1a' }}>
-                        <h5 className="fw-bold mb-4">Përmbledhja Ekzekutive</h5>
+                    <div className="premium-card p-5 h-100 text-white">
+                        <h5 className="fw-bold mb-4" style={{ color: 'var(--accent)' }}>Përmbledhja Ekzekutive</h5>
                         <div className="d-flex justify-content-between mb-4 border-bottom border-secondary pb-2">
                             <span className="opacity-75 small">DETYRA TË KRYERA</span>
                             <span className="h4 fw-bold">{stats.done}</span>

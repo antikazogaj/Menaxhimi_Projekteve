@@ -1,13 +1,209 @@
+:root {
+  /* Brand Colors - Dark Nebula Theme */
+  --primary: #8b5cf6; /* Neon Purple */
+  --primary-hover: #7c3aed;
+  --secondary: #6366f1; /* Neon Indigo */
+  --accent: #ec4899; /* Neon Pink */
+  
+  /* Sfondi global (nuk përdoret solid, por si referencë) */
+  --background: #09090b; 
+  --surface: rgba(20, 20, 30, 0.4); /* Glass Surface */
+  
+  /* Text Colors for Dark Mode */
+  --text-main: #ffffff;
+  --text-muted: #cbd5e1; /* Brighter muted */
+  --text-light: #f1f5f9;
+  --text-accent: #e2e8f0;
+  
+  /* Status Colors (Neon variants) */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #38bdf8;
+  
+  /* Shadows */
+  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+  --shadow-neon: 0 0 15px rgba(139, 92, 246, 0.3);
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  
+  /* Radiuses */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+
+  /* Transitions */
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Krijimi i Animated Background */
+@keyframes nebulaFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  background: linear-gradient(-45deg, #1e1b4b, #2e1065, #172554, #4c1d95);
+  background-size: 400% 400%;
+  animation: nebulaFlow 20s ease infinite;
+  color: var(--text-main);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+p, span, small, div {
+  font-family: 'Inter', sans-serif;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+/* Glassmorphism Absolute Classes */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: var(--shadow-glass);
+}
+
+/* Custom Card Styling */
+.premium-card {
+  background: rgba(30, 41, 59, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: var(--radius-xl);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: var(--shadow-md);
+  transition: var(--transition);
+  color: var(--text-main);
+}
+
+.premium-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg), var(--shadow-neon);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  background: rgba(30, 41, 59, 0.5);
+}
+
+/* Neon Animated Buttons */
+.btn-premium {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-lg);
+  padding: 0.6rem 1.5rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  transition: var(--transition);
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+}
+
+.btn-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.6);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+/* Dark Mode Inputs */
+input, select, textarea {
+  background: rgba(0, 0, 0, 0.2) !important;
+  color: var(--text-main) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: var(--radius-md);
+  transition: var(--transition);
+}
+input:focus, select:focus, textarea:focus {
+  background: rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid var(--primary) !important;
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.3) !important;
+  outline: none;
+}
+
+::placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+  opacity: 1 !important;
+}
+
+.text-muted {
+  color: var(--text-muted) !important;
+}
+
+.text-success {
+  color: var(--success) !important;
+}
+
+.text-danger {
+  color: var(--danger) !important;
+}
+
+/* Hide scrollbar but keep functionality */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Layout Utilities */
+.page-container {
+  min-height: 100vh;
+  padding: 2rem;
+  padding-bottom: 5rem;
+}
+
+/* Sidebar overriding */
+.sidebar-link {
+  transition: var(--transition);
+  border-radius: var(--radius-md);
+  color: var(--text-muted) !important;
+  font-weight: 500;
+}
+
+.sidebar-link:hover {
+  background: rgba(139, 92, 246, 0.1);
+  color: var(--text-main) !important;
+  transform: translateX(6px);
+}
+
+.sidebar-link.active {
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.2), transparent);
+  color: var(--text-main) !important;
+  border-left: 3px solid var(--primary);
+  font-weight: 700;
+  text-shadow: 0 0 10px rgba(255,255,255,0.2);
+}
+
+/* Tables for dark mode */
+.table {
+  color: var(--text-main) !important;
+  --bs-table-bg: transparent;
+  --bs-table-striped-bg: rgba(255,255,255,0.02);
+  --bs-table-hover-bg: rgba(255,255,255,0.05);
+}
+
+.table td, .table th {
+  border-color: rgba(255, 255, 255, 0.05) !important;
+  background-color: transparent !important;
+}
+
+.table-hover > tbody > tr:hover > * {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: var(--text-main) !important;
 }
