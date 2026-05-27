@@ -37,7 +37,11 @@ const AddTask = ({ projectId, onTaskAdded }) => {
             }, { headers });
             setTitulli(''); setPershkrimi(''); setDataAfatit(''); setLabelId(''); setSprintId('');
             onTaskAdded(); 
-        } catch (error) { alert("❌ Gabim gjatë shtimit!"); }
+        } catch (error) {
+            const dataObj = error.response?.data;
+            const errorMsg = dataObj ? JSON.stringify(dataObj) : error.message;
+            alert("❌ Gabim gjatë shtimit të detyrës: " + errorMsg);
+        }
     };
 
     return (

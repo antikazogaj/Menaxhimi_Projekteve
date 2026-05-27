@@ -19,7 +19,9 @@ const AddProject = ({ onProjectAdded }) => {
             setShow(false);
             if (onProjectAdded) onProjectAdded(); // Rifreskon Dashboard-in
         } catch (err) {
-            alert("Gabim gjatë krijimit të projektit!");
+            const dataObj = err.response?.data;
+            const errorMsg = dataObj ? JSON.stringify(dataObj) : err.message;
+            alert("Gabim gjatë krijimit të projektit: " + errorMsg);
         }
     };
 

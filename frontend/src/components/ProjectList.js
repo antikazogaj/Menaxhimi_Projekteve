@@ -39,7 +39,9 @@ const ProjectList = () => {
             fetchData(); // Rifreskon listën
             alert("Projekti u krijua!");
         } catch (error) {
-            alert("Gabim gjatë krijimit!");
+            const dataObj = error.response?.data;
+            const errorMsg = dataObj ? JSON.stringify(dataObj) : error.message;
+            alert("Gabim gjatë krijimit të projektit: " + errorMsg);
         }
     };
 

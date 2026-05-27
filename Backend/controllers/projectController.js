@@ -46,7 +46,7 @@ const createProject = async (req, res) => {
         console.error("Gabim te createProject:", error);
         res.status(500).json({ 
             message: "Gabim gjatë krijimit të projektit", 
-            error: error.message 
+            error: error.message || error.code || error.toString() || "Gabim i panjohur"
         });
     }
 };
