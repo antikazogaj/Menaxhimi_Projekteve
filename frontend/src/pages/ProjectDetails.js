@@ -25,11 +25,11 @@ const ProjectDetails = () => {
         try {
             const config = { headers };
             const [resT, resM, resA, resS, resL] = await Promise.all([
-                axios.get(`http://localhost:5000/api/tasks/${id}`, config).catch(() => ({ data: [] })),
-                axios.get(`http://localhost:5000/api/members/${id}`, config).catch(() => ({ data: [] })),
-                axios.get(`http://localhost:5000/api/activities/${id}`, config).catch(() => ({ data: [] })),
-                axios.get(`http://localhost:5000/api/sprints/${id}`, config).catch(() => ({ data: [] })),
-                axios.get(`http://localhost:5000/api/labels`, config).catch(() => ({ data: [] }))
+                axios.get(`http://localhost:5001/api/tasks/${id}`, config).catch(() => ({ data: [] })),
+                axios.get(`http://localhost:5001/api/members/${id}`, config).catch(() => ({ data: [] })),
+                axios.get(`http://localhost:5001/api/activities/${id}`, config).catch(() => ({ data: [] })),
+                axios.get(`http://localhost:5001/api/sprints/${id}`, config).catch(() => ({ data: [] })),
+                axios.get(`http://localhost:5001/api/labels`, config).catch(() => ({ data: [] }))
             ]);
             setTasks(Array.isArray(resT.data) ? resT.data : []);
             setMembers(Array.isArray(resM.data) ? resM.data : []);
@@ -45,7 +45,7 @@ const ProjectDetails = () => {
     const handleAddMember = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:5000/api/members/add', { project_id: id, email, roli: 'Member' }, { headers });
+            await axios.post('http://localhost:5001/api/members/add', { project_id: id, email, roli: 'Member' }, { headers });
             setEmail(''); fetchData();
         } catch (e) { alert("Përdoruesi nuk u gjet!"); }
     };
@@ -54,20 +54,20 @@ const ProjectDetails = () => {
     const handleAddSprint = async (e) => {
         e.preventDefault();
         if (!newSprintName) return;
-        await axios.post('http://localhost:5000/api/sprints', { project_id: id, emertimi: newSprintName }, { headers });
+        await axios.post('http://localhost:5001/api/sprints', { project_id: id, emertimi: newSprintName }, { headers });
         setNewSprintName(''); fetchData();
     };
 
     const handleUpdateStatus = async (taskId, newStatus) => {
         try {
-            await axios.put(`http://localhost:5000/api/tasks/${taskId}`, { statusi: newStatus, project_id: id }, { headers });
+            await axios.put(`http://localhost:5001/api/tasks/${taskId}`, { statusi: newStatus, project_id: id }, { headers });
             fetchData();
         } catch (error) { console.error(error); }
     };
 
     const handleUpdateLabel = async (taskId, labelId) => {
         try {
-            await axios.put(`http://localhost:5000/api/tasks/${taskId}/label`, { label_id: labelId }, { headers });
+            await axios.put(`http://localhost:5001/api/tasks/${taskId}/label`, { label_id: labelId }, { headers });
             fetchData();
         } catch (error) { console.error(error); }
     };
@@ -75,7 +75,7 @@ const ProjectDetails = () => {
     const handleDeleteSprint = async (sId, e) => {
         e.stopPropagation();
         if (window.confirm("Fshij fazën?")) {
-            await axios.delete(`http://localhost:5000/api/sprints/${sId}`, { headers });
+            await axios.delete(`http://localhost:5001/api/sprints/${sId}`, { headers });
             fetchData();
         }
     };
@@ -94,13 +94,13 @@ const ProjectDetails = () => {
         const formData = new FormData();
         formData.append('file', file); 
         formData.append('task_id', taskId);
-        await axios.post('http://localhost:5000/api/attachments/upload', formData, { headers: { ...headers, 'Content-Type': 'multipart/form-data' } });
+        await axios.post('http://localhost:5001/api/attachments/upload', formData, { headers: { ...headers, 'Content-Type': 'multipart/form-data' } });
         alert("📎 U ngarkua!"); fetchData();
     };
 
     const handleAddComment = async (taskId) => {
         if (!commentText[taskId]) return;
-        await axios.post(`http://localhost:5000/api/comments`, { taskId, komenti: commentText[taskId] }, { headers });
+        await axios.post(`http://localhost:5001/api/comments`, { taskId, komenti: commentText[taskId] }, { headers });
         setCommentText({ ...commentText, [taskId]: '' }); fetchData();
     };
 
@@ -224,7 +224,7 @@ const ProjectDetails = () => {
                                                     <option value="">+ ETIKETË</option>
                                                     {allLabels.map(l => <option key={l.id} value={l.id}>{l.emertimi.toUpperCase()}</option>)}
                                                 </select>
-                                                <button onClick={() => { if(window.confirm("Fshij?")) axios.delete(`http://localhost:5000/api/tasks/${t.id}`, {headers}).then(fetchData) }} className="btn btn-link text-muted p-0" style={{fontSize:'12px'}}>delete</button>
+                                                <button onClick={() => { if(window.confirm("Fshij?")) axios.delete(`http://localhost:5001/api/tasks/${t.id}`, {headers}).then(fetchData) }} className="btn btn-link text-muted p-0" style={{fontSize:'12px'}}>delete</button>
                                             </div>
 
                                             <h6 className={`fw-bold mb-1`} style={{ fontSize: '14px', color: 'var(--text-main)', opacity: status === 'Done' ? 0.6 : 1, textDecoration: status === 'Done' ? 'line-through' : 'none' }}>{t.titulli}</h6>
@@ -237,12 +237,12 @@ const ProjectDetails = () => {
             file?.rruga ? (
                 <a 
                     key={idx} 
-                    href={`http://localhost:5000/uploads/${file.rruga}`} 
+                    href={`http://localhost:5001/uploads/${file.rruga}`} 
                     target="_blank" 
                     rel="noreferrer"
                 >
                     <img 
-                        src={`http://localhost:5000/uploads/${file.rruga}`} 
+                        src={`http://localhost:5001/uploads/${file.rruga}`} 
                         alt="attachment"
                         style={{ 
                             width: '35px', 

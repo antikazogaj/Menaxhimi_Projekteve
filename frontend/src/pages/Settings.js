@@ -17,7 +17,7 @@ const Settings = () => {
 
     const fetchLabels = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/labels', { headers });
+            const res = await axios.get('http://localhost:5001/api/labels', { headers });
             setLabels(Array.isArray(res.data) ? res.data : []);
         } catch (e) { console.error("Gabim gjatë marrjes së etiketave", e); }
     };
@@ -27,7 +27,7 @@ const Settings = () => {
     const handleAddLabel = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:5000/api/labels', { emertimi, ngjyra }, { headers });
+            await axios.post('http://localhost:5001/api/labels', { emertimi, ngjyra }, { headers });
             setEmertimi(''); setNgjyra('#000000'); fetchLabels();
         } catch (e) { alert("Gabim gjatë shtimit të etiketës!"); }
     };
@@ -35,7 +35,7 @@ const Settings = () => {
     const handleDeleteLabel = async (id) => {
         if (!window.confirm("A jeni i sigurt që dëshironi ta fshini këtë etiketë?")) return;
         try {
-            await axios.delete(`http://localhost:5000/api/labels/${id}`, { headers });
+            await axios.delete(`http://localhost:5001/api/labels/${id}`, { headers });
             fetchLabels();
         } catch (e) { 
             if (e.response && e.response.data && e.response.data.message) {

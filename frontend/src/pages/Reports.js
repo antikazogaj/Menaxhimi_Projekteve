@@ -1,30 +1,72 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
-// RREGULLIMI: Importet e sakta për Chart.js që të mos dalë gabimi i kuq
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale } from 'chart.js';
-import { Pie } from 'react-chartjs-2';
+import {
+    Chart as ChartJS,
+    ArcElement,
+    Tooltip,
+    Legend,
+    CategoryScale,
+    LinearScale
+} from 'chart.js';
+import { Doughnut } from 'react-chartjs-2';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale);
 
+// Plugin për tekstin në qendër të donut
+const centerTextPlugin = {
+    id: 'centerText',
+    afterDraw(chart) {
+        const { ctx, chartArea: { left, top, right, bottom } } = chart;
+        const cx = (left + right) / 2;
+        const cy = (top + bottom) / 2;
+
+        const total = chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+        const done = chart.data.datasets[0].data[0];
+        const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+        ctx.save();
+
+        // Rrethi i brendshëm me gradient
+        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 60);
+        grad.addColorStop(0, 'rgba(99,102,241,0.15)');
+        grad.addColorStop(1, 'rgba(99,102,241,0)');
+        ctx.beginPath();
+        ctx.arc(cx, cy, 60, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // Përqindja
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = 'bold 36px Inter, sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(`${pct}%`, cx, cy - 10);
+
+        // Nëntitulli
+        ctx.font = '11px Inter, sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.fillText('EFIKASITET', cx, cy + 18);
+
+        ctx.restore();
+    }
+};
+
+ChartJS.register(centerTextPlugin);
+
 const Reports = () => {
-    // Fillojmë me objekt, fiks siç po e dërgon serveri në foto
     const [stats, setStats] = useState({ done: 0, pending: 0 });
     const [loading, setLoading] = useState(true);
+    const [animVal, setAnimVal] = useState(0);
     const token = localStorage.getItem('token');
 
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const res = await axios.get('http://localhost:5000/api/tasks/all/user', {
+                const res = await axios.get('http://localhost:5001/api/tasks/all/user', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
-                
-                // Serveri po dërgon: {done: 2, pending: 4}
-                console.log("Të dhënat reale:", res.data);
 
                 if (res.data) {
-                    // Nëse vjen si objekt {done, pending} e marrim direkt
-                    // Nëse vjen si listë detyrash, i filtrojmë (siguri e dyfishtë)
                     if (Array.isArray(res.data)) {
                         setStats({
                             done: res.data.filter(t => t.statusi === 'Done').length,
@@ -49,63 +91,232 @@ const Reports = () => {
     const total = stats.done + stats.pending;
     const efficiency = total > 0 ? Math.round((stats.done / total) * 100) : 0;
 
-    const data = {
+    // Animacion counter
+    useEffect(() => {
+        if (!loading) {
+            let start = 0;
+            const step = Math.ceil(efficiency / 40);
+            const timer = setInterval(() => {
+                start += step;
+                if (start >= efficiency) { setAnimVal(efficiency); clearInterval(timer); }
+                else setAnimVal(start);
+            }, 20);
+            return () => clearInterval(timer);
+        }
+    }, [loading, efficiency]);
+
+    const chartData = {
         labels: ['Të Kryera', 'Në Proces'],
         datasets: [{
-            data: [stats.done, stats.pending],
-            backgroundColor: ['var(--success)', 'rgba(255,255,255,0.1)'],
-            borderColor: 'rgba(255,255,255,0.1)',
+            data: total > 0 ? [stats.done, stats.pending] : [0, 1],
+            backgroundColor: [
+                'rgba(99,102,241,1)',
+                'rgba(255,255,255,0.07)'
+            ],
+            hoverBackgroundColor: [
+                'rgba(129,140,248,1)',
+                'rgba(255,255,255,0.12)'
+            ],
+            borderColor: ['rgba(99,102,241,0.3)', 'rgba(255,255,255,0.05)'],
             borderWidth: 2,
+            hoverOffset: 8,
         }],
     };
 
-    if (loading) return <div className="p-5 text-center">Duke u ngarkuar...</div>;
+    const chartOptions = {
+        cutout: '72%',
+        animation: { animateRotate: true, duration: 1200, easing: 'easeInOutQuart' },
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                backgroundColor: 'rgba(15,15,30,0.95)',
+                titleColor: '#a5b4fc',
+                bodyColor: '#e2e8f0',
+                borderColor: 'rgba(99,102,241,0.3)',
+                borderWidth: 1,
+                padding: 12,
+                cornerRadius: 10,
+                callbacks: {
+                    label: (ctx) => ` ${ctx.label}: ${ctx.raw} detyra`
+                }
+            },
+        },
+        responsive: true,
+        maintainAspectRatio: false,
+    };
+
+    if (loading) return (
+        <div className="page-container d-flex align-items-center justify-content-center" style={{ minHeight: '60vh' }}>
+            <div style={{ textAlign: 'center' }}>
+                <div style={{
+                    width: 48, height: 48, border: '3px solid rgba(99,102,241,0.2)',
+                    borderTop: '3px solid #6366f1', borderRadius: '50%',
+                    animation: 'spin 0.8s linear infinite', margin: '0 auto 12px'
+                }} />
+                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>Duke u ngarkuar...</span>
+            </div>
+        </div>
+    );
 
     return (
         <div className="page-container animate__animated animate__fadeIn">
-            <div className="d-flex justify-content-between align-items-center mb-5 pb-3 border-bottom" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+            <style>{`
+                @keyframes spin { to { transform: rotate(360deg); } }
+                @keyframes fadeUp {
+                    from { opacity: 0; transform: translateY(18px); }
+                    to   { opacity: 1; transform: translateY(0); }
+                }
+                .stat-card { animation: fadeUp 0.5s ease forwards; }
+                .stat-card:nth-child(2) { animation-delay: 0.1s; }
+                .stat-card:nth-child(3) { animation-delay: 0.2s; }
+                .glow-ring {
+                    position: absolute; inset: -2px; border-radius: 50%;
+                    background: conic-gradient(
+                        rgba(99,102,241,0.6) ${efficiency * 3.6}deg,
+                        rgba(255,255,255,0.04) 0deg
+                    );
+                    filter: blur(6px);
+                    z-index: 0;
+                }
+                .legend-dot {
+                    width: 10px; height: 10px; border-radius: 50%;
+                    display: inline-block; margin-right: 8px;
+                }
+                .progress-premium {
+                    height: 6px; border-radius: 99px;
+                    background: rgba(255,255,255,0.07);
+                    overflow: hidden;
+                }
+                .progress-premium-fill {
+                    height: 100%; border-radius: 99px;
+                    background: linear-gradient(90deg, #6366f1, #818cf8);
+                    transition: width 1s ease;
+                }
+            `}</style>
+
+            {/* Header */}
+            <div className="d-flex justify-content-between align-items-center mb-5 pb-3 border-bottom" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
                 <div>
-                    <h4 className="fw-bold m-0 text-uppercase" style={{ color: 'var(--text-main)', letterSpacing: '1px' }}>
-                        Raportet 
+                    <h4 className="fw-bold m-0 text-uppercase" style={{ color: 'var(--text-main)', letterSpacing: '2px' }}>
+                        📊 Raportet
                     </h4>
-                    <p className="small m-0 mt-1" style={{ color: 'var(--text-light)' }}>Shiko statistikat e detyrave tuaja</p>
+                    <p className="small m-0 mt-1" style={{ color: 'var(--text-light)' }}>Statistikat e detyrave tuaja në kohë reale</p>
+                </div>
+                <div style={{
+                    background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.25)',
+                    borderRadius: 12, padding: '6px 16px', fontSize: 11,
+                    color: '#a5b4fc', fontWeight: 700, letterSpacing: 1
+                }}>
+                    {total} DETYRA GJITHSEJ
                 </div>
             </div>
 
             <div className="row g-4">
-                <div className="col-md-6">
-                    <div className="premium-card p-4 h-100">
-                        <h6 className="small text-uppercase fw-bold text-center mb-4" style={{ color: 'var(--primary)', letterSpacing: '1px' }}>Statistikat Globale</h6>
-                        <div style={{ height: '280px', margin: '0 auto', width: '100%' }}>
-                            {/* KETU NDODH NDRYSHIMI: Sido që të vijnë të dhënat, grafiku do të shfaqet */}
-                            {total > 0 ? (
-                                <Pie data={data} key={`${stats.done}-${stats.pending}`} />
-                            ) : (
-                                <div className="text-center py-5 text-muted small">Nuk ka të dhëna në databazë.</div>
-                            )}
+
+                {/* --- DONUT CHART PREMIUM --- */}
+                <div className="col-md-5">
+                    <div className="premium-card p-4 h-100 d-flex flex-column align-items-center justify-content-center" style={{ position: 'relative', overflow: 'hidden' }}>
+
+                        {/* Sfond dekorativ */}
+                        <div style={{
+                            position: 'absolute', top: -60, right: -60,
+                            width: 200, height: 200, borderRadius: '50%',
+                            background: 'radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%)',
+                            pointerEvents: 'none'
+                        }} />
+
+                        <h6 className="small text-uppercase fw-bold text-center mb-4" style={{ color: 'rgba(165,180,252,0.8)', letterSpacing: '2px', fontSize: 10 }}>
+                            Statistikat Globale
+                        </h6>
+
+                        {/* Donut me glow ring */}
+                        <div style={{ position: 'relative', width: 220, height: 220 }}>
+                            <div className="glow-ring" />
+                            <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
+                                {total > 0 ? (
+                                    <Doughnut data={chartData} options={chartOptions} key={`${stats.done}-${stats.pending}`} />
+                                ) : (
+                                    <Doughnut data={chartData} options={{ ...chartOptions, plugins: { ...chartOptions.plugins, tooltip: { enabled: false } } }} />
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Legjenda */}
+                        <div className="d-flex gap-4 mt-4">
+                            <div className="d-flex align-items-center">
+                                <span className="legend-dot" style={{ background: '#6366f1', boxShadow: '0 0 8px rgba(99,102,241,0.6)' }} />
+                                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>Të Kryera <strong style={{ color: '#fff' }}>{stats.done}</strong></span>
+                            </div>
+                            <div className="d-flex align-items-center">
+                                <span className="legend-dot" style={{ background: 'rgba(255,255,255,0.2)' }} />
+                                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>Në Proces <strong style={{ color: '#fff' }}>{stats.pending}</strong></span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="col-md-6">
-                    <div className="premium-card p-5 h-100 text-white">
-                        <h5 className="fw-bold mb-4" style={{ color: 'var(--accent)' }}>Përmbledhja Ekzekutive</h5>
-                        <div className="d-flex justify-content-between mb-4 border-bottom border-secondary pb-2">
-                            <span className="opacity-75 small">DETYRA TË KRYERA</span>
-                            <span className="h4 fw-bold">{stats.done}</span>
-                        </div>
-                        <div className="d-flex justify-content-between mb-4 border-bottom border-secondary pb-2">
-                            <span className="opacity-75 small">DETYRA NË PRITJE</span>
-                            <span className="h4 fw-bold">{stats.pending}</span>
-                        </div>
-                        <div className="mt-auto pt-4">
-                            <div className="d-flex justify-content-between align-items-end mb-2">
-                                <span className="small opacity-75">EFIKASITETI</span>
-                                <span className="fw-bold">{efficiency}%</span>
+                {/* --- PANELI I DJATHTË --- */}
+                <div className="col-md-7">
+                    <div className="premium-card p-4 h-100 d-flex flex-column" style={{ gap: 16 }}>
+                        <h5 className="fw-bold mb-2" style={{ color: '#a5b4fc', fontSize: 13, letterSpacing: 2, textTransform: 'uppercase' }}>
+                            Përmbledhja Ekzekutive
+                        </h5>
+
+                        {/* Karta statistike */}
+                        {[
+                            { label: 'Detyra të Kryera', value: stats.done, color: '#6366f1', icon: '✅', pct: total > 0 ? Math.round(stats.done / total * 100) : 0 },
+                            { label: 'Detyra në Pritje', value: stats.pending, color: '#f59e0b', icon: '⏳', pct: total > 0 ? Math.round(stats.pending / total * 100) : 0 },
+                            { label: 'Gjithsej Detyra', value: total, color: '#818cf8', icon: '📋', pct: 100 },
+                        ].map((item, i) => (
+                            <div key={i} className="stat-card" style={{
+                                background: 'rgba(255,255,255,0.04)',
+                                border: `1px solid rgba(255,255,255,0.07)`,
+                                borderLeft: `3px solid ${item.color}`,
+                                borderRadius: 12,
+                                padding: '14px 18px',
+                                opacity: 0
+                            }}>
+                                <div className="d-flex justify-content-between align-items-center mb-2">
+                                    <div className="d-flex align-items-center gap-2">
+                                        <span style={{ fontSize: 16 }}>{item.icon}</span>
+                                        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: 1 }}>
+                                            {item.label}
+                                        </span>
+                                    </div>
+                                    <span style={{ fontSize: 22, fontWeight: 800, color: '#fff' }}>{item.value}</span>
+                                </div>
+                                <div className="progress-premium">
+                                    <div className="progress-premium-fill" style={{
+                                        width: `${item.pct}%`,
+                                        background: `linear-gradient(90deg, ${item.color}, ${item.color}aa)`
+                                    }} />
+                                </div>
+                                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 5, textAlign: 'right' }}>
+                                    {item.pct}% e totalit
+                                </div>
                             </div>
-                            <div className="progress" style={{ height: '8px', backgroundColor: '#333' }}>
-                                <div className="progress-bar bg-white" style={{ width: `${efficiency}%` }}></div>
+                        ))}
+
+                        {/* Efikasiteti global */}
+                        <div style={{
+                            marginTop: 'auto',
+                            background: 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(129,140,248,0.05))',
+                            border: '1px solid rgba(99,102,241,0.25)',
+                            borderRadius: 12,
+                            padding: '16px 18px',
+                        }}>
+                            <div className="d-flex justify-content-between align-items-center mb-2">
+                                <span style={{ fontSize: 11, color: '#a5b4fc', fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>
+                                    ⚡ Efikasiteti Overall
+                                </span>
+                                <span style={{ fontSize: 24, fontWeight: 900, color: '#fff' }}>{animVal}%</span>
                             </div>
+                            <div className="progress-premium">
+                                <div className="progress-premium-fill" style={{ width: `${efficiency}%` }} />
+                            </div>
+                            <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', margin: '8px 0 0' }}>
+                                {efficiency >= 75 ? '🚀 Shkëlqyeshëm! Vazhdo kështu!' : efficiency >= 50 ? '💪 Mirë, mund të bësh edhe më shumë!' : '📌 Ka hapësirë për përmirësim.'}
+                            </p>
                         </div>
                     </div>
                 </div>

@@ -13,7 +13,7 @@ const Login = () => {
             // Pastrojmë memorien para një hyrjeje të re
             localStorage.clear();
 
-            const response = await axios.post('http://localhost:5000/api/users/login', { email, password });
+            const response = await axios.post('http://localhost:5001/api/users/login', { email, password });
             
             if (response.data.token) {
                 // RUAJTJA E TË DHËNAVE NË LOCALSTORAGE

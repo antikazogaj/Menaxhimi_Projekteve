@@ -15,7 +15,7 @@ const Register = () => {
         console.log("Duke dërguar të dhënat:", { name, email, password });
 
         try {
-            const response = await axios.post('http://localhost:5000/api/users/register', { 
+            const response = await axios.post('http://localhost:5001/api/users/register', { 
     name, 
     email, 
     password 
@@ -37,7 +37,7 @@ const Register = () => {
                 mesazhi = "Gabim nga Serveri: " + (error.response.data.message || "Gabim i panjohur");
             } else if (error.request) {
                 // Gabim rrjeti (React nuk e gjen dot portin 5000)
-                mesazhi = "React nuk po mundet ta gjejë Backend-in në portin 5000!";
+                mesazhi = "React nuk po mundet ta gjejë Backend-in në portin 3000!";
             }
 
             alert("" + mesazhi);

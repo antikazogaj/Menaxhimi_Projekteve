@@ -9,7 +9,7 @@ const Users = () => {
     // 1. Funksioni për të marrë listën
     const fetchUsers = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/users', { headers });
+            const res = await axios.get('http://localhost:5001/api/users', { headers });
             setUsers(Array.isArray(res.data) ? res.data : []);
         } catch (error) { 
             console.error("Gabim te lista e përdoruesve", error); 
@@ -24,7 +24,7 @@ const Users = () => {
     const handleUpdateRole = async (userId, currentRole) => {
         const newRole = currentRole.toLowerCase() === 'admin' ? 'user' : 'admin';
         try {
-            await axios.put(`http://localhost:5000/api/users/${userId}/role`, { role: newRole }, { headers });
+            await axios.put(`http://localhost:5001/api/users/${userId}/role`, { role: newRole }, { headers });
             fetchUsers(); // Rifresko listën menjëherë
         } catch (error) {
             alert("Gabim gjatë ndryshimit të rolit!");
@@ -35,7 +35,7 @@ const Users = () => {
     const handleDelete = async (userId) => {
         if (window.confirm("A je i sigurt që dëshiron ta fshish këtë përdorues?")) {
             try {
-                await axios.delete(`http://localhost:5000/api/users/${userId}`, { headers });
+                await axios.delete(`http://localhost:5001/api/users/${userId}`, { headers });
                 fetchUsers(); // Rifresko listën menjëherë
             } catch (error) {
                 alert("Gabim gjatë fshirjes!");
