@@ -1,13 +1,16 @@
+// dotenv përdoret për të lexuar variablat e mjedisit nga skedari .env (si fjalëkalimet e databazës)
 require('dotenv').config();
 const express = require('express');
 const mysql = require('mysql2');
-const cors = require('cors');
-const path = require('path'); // SHTESA: Për rrugët e skedarëve
+const cors = require('cors'); // Lejon kërkesat nga adresa të tjera (p.sh. nga React në portin 3000 te Backend në 5001)
+const path = require('path'); 
 
 const app = express();
 
-// Middlewares
+// --- MIDDLEWARES (Ndërmjetësit) ---
+// Aktivizojmë CORS për të lejuar komunikimin Frontend-Backend
 app.use(cors());
+// Lejon serverin të kuptojë të dhënat që vijnë në formatin JSON
 app.use(express.json());
 
 // Logs për të parë çdo kërkesë në terminal
@@ -16,15 +19,16 @@ app.use((req, res, next) => {
     next();
 });
 
-// SHTESA: Bëjmë folderin 'uploads' të qasshëm nga interneti
+// SHTESA: Bëjmë folderin 'uploads' të qasshëm nga interneti (këtu ruhen skedarët e bashkëngjitur)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Lidhja me MySQL
+// --- LIDHJA ME DATABAZËN ---
+// Krijojmë lidhjen me MySQL duke përdorur të dhënat nga skedari .env për siguri
 const db = mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASS,
-    database: process.env.DB_NAME
+    host: process.env.DB_HOST,         // p.sh. localhost
+    user: process.env.DB_USER,         // p.sh. root
+    password: process.env.DB_PASS,     // fjalëkalimi
+    database: process.env.DB_NAME      // emri i databazës (taskmanagerdb)
 });
 
 db.connect((err) => {
@@ -35,16 +39,17 @@ db.connect((err) => {
     console.log(' Sukses: U lidhëm me databazën përmes .env!');
 });
 
-// Routes (Rrugët)
-app.use('/api/projects', require('./routes/projectRoutes'));
-app.use('/api/users', require('./routes/userRoutes'));
-app.use('/api/tasks', require('./routes/taskRoutes'));
-app.use('/api/members', require('./routes/memberRoutes'));
-app.use('/api/labels', require('./routes/labelRoutes'));
-app.use('/api/comments', require('./routes/commentRoutes'));
-app.use('/api/sprints', require('./routes/sprintRoutes'));
-app.use('/api/activities', require('./routes/activityRoutes'));
-app.use('/api/attachments', require('./routes/attachmentRoutes')); 
+// --- ROUTES (Rrugët e API-së) ---
+// Këtu përcaktojmë se cilët kontrollera do të përdoren për rrugë të ndryshme
+app.use('/api/projects', require('./routes/projectRoutes')); // Menaxhon projektet
+app.use('/api/users', require('./routes/userRoutes'));       // Menaxhon përdoruesit (login/register)
+app.use('/api/tasks', require('./routes/taskRoutes'));       // Menaxhon detyrat (Gantt, statuset)
+app.use('/api/members', require('./routes/memberRoutes'));   // Menaxhon anëtarët e projektit
+app.use('/api/labels', require('./routes/labelRoutes'));     // Menaxhon etiketat
+app.use('/api/comments', require('./routes/commentRoutes')); // Menaxhon komentet në detyra
+app.use('/api/sprints', require('./routes/sprintRoutes'));   // Menaxhon fazat (Burndown chart)
+app.use('/api/activities', require('./routes/activityRoutes')); // Menaxhon historikun e aktiviteteve
+app.use('/api/attachments', require('./routes/attachmentRoutes')); // Menaxhon ngarkimin e file-ve
 app.use('/uploads', express.static('uploads'));
 
 
