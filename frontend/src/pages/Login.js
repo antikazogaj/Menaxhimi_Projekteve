@@ -1,29 +1,24 @@
 import React, { useState } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import api from '../api';
+import { useNavigate, Link } from 'react-router-dom';
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleLogin = async (e) => {
         e.preventDefault();
+        setLoading(true);
         try {
-            // Pastrojmë memorien para një hyrjeje të re
             localStorage.clear();
-
-            const response = await axios.post('http://localhost:5001/api/users/login', { email, password });
+            const response = await api.post('/api/users/login', { email, password });
             
             if (response.data.token) {
-                // RUAJTJA E TË DHËNAVE NË LOCALSTORAGE
                 localStorage.setItem('token', response.data.token);
-                localStorage.setItem('role', response.data.role); // Ruan 'Admin' ose 'User'
-                localStorage.setItem('userName', response.data.name); // Ruan emrin (p.sh. Antika)
-
-                alert(` Mirë se vini ${response.data.name}!`);
-                
-                // Përdorim window.location në vend të navigate që të rifreskohet Sidebar-i menjëherë
+                localStorage.setItem('role', response.data.role);
+                localStorage.setItem('userName', response.data.name);
                 window.location.href = '/'; 
             } else {
                 alert(" Gabim: Serveri nuk dërgoi të dhënat e sakta.");
@@ -32,53 +27,93 @@ const Login = () => {
             console.error("Detajet e gabimit:", error.response?.data);
             const msg = error.response?.data?.message || "Email ose fjalëkalim i gabuar!";
             alert("❌ " + msg);
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
-        <div className="container mt-5">
-            <div className="row justify-content-center">
-                <div className="col-md-4">
-                    <div className="card shadow border-0 mt-5">
-                        <div className="card-body p-4 text-center">
-                            <h2 className="fw-bold mb-2">TASK PRO </h2>
-                            <p className="text-muted mb-4">Kyçu në llogarinë tënde</p>
-                            
-                            <form onSubmit={handleLogin} className="text-start">
-                                <div className="mb-3">
-                                    <label className="form-label small fw-bold">Email Adresa</label>
-                                    <input 
-                                        type="email" 
-                                        className="form-control form-control-lg" 
-                                        placeholder="shembull@email.com"
-                                        style={{fontSize: '14px'}}
-                                        onChange={(e) => setEmail(e.target.value)} 
-                                        required 
-                                    />
-                                </div>
-                                <div className="mb-3">
-                                    <label className="form-label small fw-bold">Fjalëkalimi</label>
-                                    <input 
-                                        type="password" 
-                                        className="form-control form-control-lg" 
-                                        placeholder="******"
-                                        style={{fontSize: '14px'}}
-                                        onChange={(e) => setPassword(e.target.value)} 
-                                        required 
-                                    />
-                                </div>
-                                <button type="submit" className="btn btn-primary btn-lg w-100 shadow-sm mt-3 fw-bold">
-                                    Identifikohu
-                                </button>
-                            </form>
-                            
-                            <div className="mt-4 small">
-                                Nuk keni llogari? <a href="/register" className="text-decoration-none fw-bold">Regjistrohuni</a>
-                            </div>
-                        </div>
+        <div className="page-container d-flex align-items-center justify-content-center animate__animated animate__fadeIn" style={{ minHeight: '100vh', padding: '20px' }}>
+            <div className="premium-card p-5" style={{ maxWidth: '420px', width: '100%', position: 'relative', overflow: 'hidden' }}>
+                
+                {/* Sfond dekorativ */}
+                <div style={{
+                    position: 'absolute', top: -50, right: -50,
+                    width: 150, height: 150, borderRadius: '50%',
+                    background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)',
+                    pointerEvents: 'none'
+                }} />
+
+                <div className="text-center mb-5">
+                    <div className="d-inline-flex align-items-center justify-content-center mb-3" style={{
+                        width: '56px', height: '56px', borderRadius: '16px',
+                        background: 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(129,140,248,0.05))',
+                        border: '1px solid rgba(99,102,241,0.3)',
+                        boxShadow: '0 8px 16px rgba(0,0,0,0.2)'
+                    }}>
+                        <span style={{ fontSize: '24px' }}>🚀</span>
                     </div>
+                    <h3 className="fw-bold m-0" style={{ color: '#fff', letterSpacing: '1px' }}>Mirë se vjen përsëri</h3>
+                    <p className="small mt-2" style={{ color: 'var(--text-light)' }}>Kyçu për të vazhduar te TaskPro</p>
+                </div>
+                
+                <form onSubmit={handleLogin}>
+                    <div className="mb-4">
+                        <label className="form-label small fw-bold text-uppercase" style={{ color: '#a5b4fc', letterSpacing: '1px', fontSize: '11px' }}>Email Adresa</label>
+                        <input 
+                            type="email" 
+                            className="form-control premium-input" 
+                            placeholder="shembull@email.com"
+                            onChange={(e) => setEmail(e.target.value)} 
+                            required 
+                            style={{ 
+                                backgroundColor: 'rgba(0,0,0,0.2)', 
+                                border: '1px solid rgba(255,255,255,0.1)', 
+                                color: '#fff',
+                                padding: '12px 16px',
+                                borderRadius: '10px'
+                            }}
+                        />
+                    </div>
+                    <div className="mb-5">
+                        <label className="form-label small fw-bold text-uppercase" style={{ color: '#a5b4fc', letterSpacing: '1px', fontSize: '11px' }}>Fjalëkalimi</label>
+                        <input 
+                            type="password" 
+                            className="form-control premium-input" 
+                            placeholder="••••••••"
+                            onChange={(e) => setPassword(e.target.value)} 
+                            required 
+                            style={{ 
+                                backgroundColor: 'rgba(0,0,0,0.2)', 
+                                border: '1px solid rgba(255,255,255,0.1)', 
+                                color: '#fff',
+                                padding: '12px 16px',
+                                borderRadius: '10px'
+                            }}
+                        />
+                    </div>
+                    
+                    <button type="submit" className="btn btn-premium w-100 py-3 fw-bold shadow-sm" disabled={loading} style={{ fontSize: '14px', borderRadius: '10px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                        {loading ? 'Duke u kyçur...' : 'Kyçu Tani'}
+                    </button>
+                </form>
+                
+                <div className="mt-5 text-center small" style={{ color: 'var(--text-muted)' }}>
+                    Nuk keni llogari? <Link to="/register" className="fw-bold ms-1" style={{ color: '#a5b4fc', textDecoration: 'none' }}>Krijo llogari</Link>
                 </div>
             </div>
+            
+            <style>{`
+                .premium-input:focus {
+                    background-color: rgba(0,0,0,0.3) !important;
+                    border-color: rgba(99,102,241,0.5) !important;
+                    box-shadow: 0 0 0 4px rgba(99,102,241,0.1) !important;
+                    color: #fff !important;
+                }
+                .premium-input::placeholder {
+                    color: rgba(255,255,255,0.2) !important;
+                }
+            `}</style>
         </div>
     );
 };
