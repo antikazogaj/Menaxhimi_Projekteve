@@ -1,33 +1,34 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../api';
 import { Link } from 'react-router-dom';
 import AddProject from './AddProject';
 import DashboardStats from './DashboardStats';
 
 const Dashboard = () => {
-    // 1. Deklarojmë States (Këto që të mungonin)
+    // --- STATE VARIABLES (Të dhënat që ndryshojnë në ekran) ---
+    // 'projects' ruan listën e projekteve. Fillon si një varg bosh []
     const [projects, setProjects] = useState([]);
+    // 'stats' ruan numrat për vizualizimin e totalit të detyrave dhe atyre të përfunduara
     const [stats, setStats] = useState({ totalTasks: 0, completedTasks: 0 });
     
-    // 2. Deklarojmë Headers (Edhe kjo të mungonte)
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
-
-    // 3. Funksioni i rregulluar
+    // Ky funksion merr të dhënat nga Backend
     const fetchData = async () => {
         try {
+            // Promise.all lejon që të dërgojmë dy kërkesa në të njëjtën kohë (më e shpejtë)
             const [resP, resT] = await Promise.all([
-                axios.get('http://localhost:5001/api/projects', { headers }),
-                axios.get('http://localhost:5001/api/tasks/all/user', { headers }).catch(() => ({ data: [] }))
+                api.get('/api/projects'), // Merr projektet
+                api.get('/api/tasks/all/user').catch(() => ({ data: [] })) // Merr detyrat për statistikat
             ]);
 
+            // Verifikojmë që përgjigjet janë Array (Vargje) për të mos pasur "crash"
             const projectsData = Array.isArray(resP.data) ? resP.data : [];
             const tasksData = Array.isArray(resT.data) ? resT.data : [];
 
+            // Përditësojmë pamjen në ekran (State-et)
             setProjects(projectsData);
             setStats({
                 totalTasks: tasksData.length,
-                completedTasks: tasksData.filter(t => t.statusi?.toLowerCase() === 'done').length
+                completedTasks: tasksData.filter(t => t.statusi?.toLowerCase() === 'done').length // Numëron vetëm detyrat me status 'Done'
             });
 
         } catch (e) { 
@@ -36,6 +37,7 @@ const Dashboard = () => {
         }
     };
 
+    // useEffect ekzekutohet vetëm një herë kur hapet faqja (për shkak të [] në fund)
     useEffect(() => {
         fetchData();
     }, []);

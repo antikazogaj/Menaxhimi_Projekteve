@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../api';
 
 const AddProject = ({ onProjectAdded }) => {
     const [emertimi, setEmertimi] = useState('');
@@ -8,12 +8,8 @@ const AddProject = ({ onProjectAdded }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const token = localStorage.getItem('token');
         try {
-            await axios.post('http://localhost:5001/api/projects', 
-                { emertimi, pershkrimi }, 
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+            await api.post('/api/projects', { emertimi, pershkrimi });
             setEmertimi(''); 
             setPershkrimi(''); 
             setShow(false);

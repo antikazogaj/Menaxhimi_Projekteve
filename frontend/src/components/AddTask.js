@@ -1,41 +1,59 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 
-const AddTask = ({ projectId, onTaskAdded }) => {
+const AddTask = ({ projectId, onTaskAdded, existingTasks = [] }) => {
+    // --- STATE VARIABLES ---
+    // Ruajnë vlerat që përdoruesi po shkruan në format e tyre përkatëse
     const [titulli, setTitulli] = useState('');
-    const [pershkrimi, setPershkrimi] = useState('');
+    const [pershkrimi, setPershkrimi] = useState(''); // Ky vjen nga editori Rich Text (Quill)
+    const [dataFillimit, setDataFillimit] = useState('');
     const [dataAfatit, setDataAfatit] = useState('');
     const [labelId, setLabelId] = useState('');
     const [prioriteti, setPrioriteti] = useState('Medium');
     const [sprintId, setSprintId] = useState(''); 
+    const [dependsOnTaskId, setDependsOnTaskId] = useState(''); // Për Gantt Chart, nga cila detyrë varet
+    
+    // Këto lista mbushen me të dhëna nga databaza për të shfaqur opsionet në "Select"
     const [labels, setLabels] = useState([]);
     const [sprints, setSprints] = useState([]);
 
     const token = localStorage.getItem('token');
     const headers = { Authorization: `Bearer ${token}` };
 
+    // Ky efekt (useEffect) ekzekutohet sapo hapet faqja për të marrë listat mbështetëse
     useEffect(() => {
         const fetchMetadata = async () => {
             try {
+                // Tërheqim të gjitha etiketat dhe fazat (sprints) e këtij projekti njëkohësisht
                 const [resL, resS] = await Promise.all([
-                    axios.get('http://localhost:5001/api/labels', { headers }),
-                    axios.get(`http://localhost:5001/api/sprints/${projectId}`, { headers })
+                    api.get('/api/labels'),
+                    api.get(`/api/sprints/${projectId}`)
                 ]);
                 setLabels(Array.isArray(resL.data) ? resL.data : []);
                 setSprints(Array.isArray(resS.data) ? resS.data : []);
             } catch (error) { console.error(error); }
         };
         fetchMetadata();
-    }, [projectId]);
+    }, [projectId]); // Ekzekutohet përsëri vetëm nëse ndryshon `projectId`
 
+    // Funksioni që thirret kur përdoruesi shtyp butonin "+" (Submit)
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        e.preventDefault(); // Ndalon rifreskimin automatik të faqes nga shfletuesi
         try {
-            await axios.post('http://localhost:5001/api/tasks', {
+            // Dërgojmë një kërkesë 'POST' me të gjitha të dhënat e reja
+            await api.post('/api/tasks', {
                 project_id: Number(projectId), titulli, pershkrimi, sprint_id: sprintId || null,
-                data_afatit: dataAfatit, label_id: labelId || null, prioriteti, statusi: 'To Do'
-            }, { headers });
-            setTitulli(''); setPershkrimi(''); setDataAfatit(''); setLabelId(''); setSprintId('');
+                data_fillimit: dataFillimit || null, data_afatit: dataAfatit || null, 
+                label_id: labelId || null, prioriteti, statusi: 'To Do',
+                depends_on_task_id: dependsOnTaskId || null
+            });
+            
+            // Pasi ruhet me sukses, pastrojmë të gjitha fushat e formës
+            setTitulli(''); setPershkrimi(''); setDataFillimit(''); setDataAfatit(''); setLabelId(''); setSprintId(''); setDependsOnTaskId('');
+            
+            // Njoftojmë komponentin prind (`ProjectDetails`) që të rifreskojë listën e detyrave
             onTaskAdded(); 
         } catch (error) {
             const dataObj = error.response?.data;
@@ -50,11 +68,20 @@ const AddTask = ({ projectId, onTaskAdded }) => {
                 <form onSubmit={handleSubmit} className="row g-3 align-items-end">
                     <div className="col-md-2">
                         <label className="fw-bold text-muted mb-2" style={{ fontSize: '10px' }}>TITULLI</label>
-                        <input type="text" className="form-control border-0 py-2" placeholder="Emri..." value={titulli} onChange={(e) => setTitulli(e.target.value)} required style={{ borderRadius: '10px', fontSize: '13px', background: 'rgba(0,0,0,0.2)' }} />
+                        <input type="text" className="form-control border-0 py-2 text-white" placeholder="Emri..." value={titulli} onChange={(e) => setTitulli(e.target.value)} required style={{ borderRadius: '10px', fontSize: '13px', background: 'rgba(0,0,0,0.2)' }} />
                     </div>
-                    <div className="col-md-3">
-                        <label className="fw-bold text-muted mb-2" style={{ fontSize: '10px' }}>PËRSHKRIMI</label>
-                        <input type="text" className="form-control border-0 py-2" placeholder="Detaje..." value={pershkrimi} onChange={(e) => setPershkrimi(e.target.value)} style={{ borderRadius: '10px', fontSize: '13px', background: 'rgba(0,0,0,0.2)' }} />
+                    <div className="col-md-4">
+                        <label className="fw-bold text-muted mb-2" style={{ fontSize: '10px' }}>PËRSHKRIMI (Rich Text)</label>
+                        <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '10px', overflow: 'hidden' }}>
+                            <ReactQuill theme="snow" value={pershkrimi} onChange={setPershkrimi} style={{ color: 'white' }} />
+                        </div>
+                    </div>
+                    <div className="col-md-2">
+                        <label className="fw-bold text-muted mb-2" style={{ fontSize: '10px' }}>VARËSIA (Opcion)</label>
+                        <select className="form-select border-0 py-2 text-white" value={dependsOnTaskId} onChange={(e) => setDependsOnTaskId(e.target.value)} style={{ borderRadius: '10px', fontSize: '13px', background: 'rgba(0,0,0,0.2)' }}>
+                            <option value="" style={{color: 'black'}}>S'ka varësi</option>
+                            {existingTasks.map(t => <option key={t.id} value={t.id} style={{color: 'black'}}>{t.titulli}</option>)}
+                        </select>
                     </div>
                     <div className="col-md-2">
                         <label className="fw-bold text-muted mb-2" style={{ fontSize: '10px' }}>ZGJIDH FAZËN</label>
@@ -71,8 +98,12 @@ const AddTask = ({ projectId, onTaskAdded }) => {
                         </select>
                     </div>
                     <div className="col-md-2">
-                        <label className="fw-bold text-muted mb-2" style={{ fontSize: '10px' }}>AFATI</label>
-                        <input type="date" className="form-control border-0 py-2" value={dataAfatit} onChange={(e) => setDataAfatit(e.target.value)} required style={{ borderRadius: '10px', fontSize: '13px', background: 'rgba(0,0,0,0.2)' }} />
+                        <label className="fw-bold text-muted mb-2" style={{ fontSize: '10px' }}>DATA E FILLIMIT</label>
+                        <input type="date" className="form-control border-0 py-2 text-white" value={dataFillimit} onChange={(e) => setDataFillimit(e.target.value)} required style={{ borderRadius: '10px', fontSize: '13px', background: 'rgba(0,0,0,0.2)' }} />
+                    </div>
+                    <div className="col-md-2">
+                        <label className="fw-bold text-muted mb-2" style={{ fontSize: '10px' }}>DATA E FUNDIT</label>
+                        <input type="date" className="form-control border-0 py-2 text-white" value={dataAfatit} onChange={(e) => setDataAfatit(e.target.value)} required style={{ borderRadius: '10px', fontSize: '13px', background: 'rgba(0,0,0,0.2)' }} />
                     </div>
                     <div className="col-md-1">
                         <button type="submit" className="btn btn-premium w-100 fw-bold py-2 shadow-sm" style={{ borderRadius: '10px' }}>+</button>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../api';
 import { Link } from 'react-router-dom';
 
 const ProjectList = () => {
@@ -10,16 +10,12 @@ const ProjectList = () => {
     const [showModal, setShowModal] = useState(false);
     const [newProject, setNewProject] = useState({ emertimi: '', pershkrimi: '' });
 
-    const role = localStorage.getItem('role');
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
-
     const fetchData = async () => {
         try {
-            const resProjects = await axios.get('http://localhost:5001/api/projects', { headers });
+            const resProjects = await api.get('/api/projects');
             setProjects(Array.isArray(resProjects.data) ? resProjects.data : []);
 
-            const resStats = await axios.get('http://localhost:5001/api/tasks/all/stats', { headers });
+            const resStats = await api.get('/api/tasks/all/stats');
             setStats({
                 totalTasks: (resStats.data.done || 0) + (resStats.data.pending || 0),
                 totalMembers: 5 
@@ -33,7 +29,7 @@ const ProjectList = () => {
     const handleCreateProject = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:5001/api/projects', newProject, { headers });
+            await api.post('/api/projects', newProject);
             setShowModal(false);
             setNewProject({ emertimi: '', pershkrimi: '' });
             fetchData(); // Rifreskon listën

@@ -2,6 +2,14 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import AddTask from '../components/AddTask';
+import { Gantt, ViewMode } from 'gantt-task-react';
+import "gantt-task-react/dist/index.css";
+import { Line } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip as ChartTooltip, Legend } from 'chart.js';
+import api from '../api';
+
+// Regjistro elementët e Chart.js për grafikun Line
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, ChartTooltip, Legend);
 
 const ProjectDetails = () => {
     const { id } = useParams();
@@ -15,21 +23,26 @@ const ProjectDetails = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedSprint, setSelectedSprint] = useState(null);
     const [newSprintName, setNewSprintName] = useState('');
+    const [burndownData, setBurndownData] = useState(null);
     const [commentText, setCommentText] = useState({});
     const [selectedFile, setSelectedFile] = useState({});
+    const [viewMode, setViewMode] = useState('board'); // 'board' ose 'gantt'
 
     const token = localStorage.getItem('token');
     const headers = { Authorization: `Bearer ${token}` };
 
+    // --- FUNKSIONI KRYESOR PËR MARRJEN E TË DHËNAVE ---
     const fetchData = async () => {
         try {
             const config = { headers };
+            // Përdorim Promise.all për të marrë 5 lloje të dhënash në të njëjtën kohë
+            // Kjo e bën faqen të hapet shumë më shpejt se sa t'i merrnim një nga një
             const [resT, resM, resA, resS, resL] = await Promise.all([
-                axios.get(`http://localhost:5001/api/tasks/${id}`, config).catch(() => ({ data: [] })),
-                axios.get(`http://localhost:5001/api/members/${id}`, config).catch(() => ({ data: [] })),
-                axios.get(`http://localhost:5001/api/activities/${id}`, config).catch(() => ({ data: [] })),
-                axios.get(`http://localhost:5001/api/sprints/${id}`, config).catch(() => ({ data: [] })),
-                axios.get(`http://localhost:5001/api/labels`, config).catch(() => ({ data: [] }))
+                axios.get(`http://localhost:5001/api/tasks/${id}`, config).catch(() => ({ data: [] })), // Detyrat
+                axios.get(`http://localhost:5001/api/members/${id}`, config).catch(() => ({ data: [] })), // Anëtarët
+                axios.get(`http://localhost:5001/api/activities/${id}`, config).catch(() => ({ data: [] })), // Aktivitetet (Historiku)
+                axios.get(`http://localhost:5001/api/sprints/${id}`, config).catch(() => ({ data: [] })), // Fazat
+                axios.get(`http://localhost:5001/api/labels`, config).catch(() => ({ data: [] })) // Etiketat
             ]);
             setTasks(Array.isArray(resT.data) ? resT.data : []);
             setMembers(Array.isArray(resM.data) ? resM.data : []);
@@ -80,24 +93,30 @@ const ProjectDetails = () => {
         }
     };
 
-    // DRAG & DROP
+    // --- LOGJIKA E DRAG & DROP (Tërhiq dhe Lësho) ---
+    // Kur fillojmë të tërheqim një detyrë, ruajmë ID-në e saj
     const onDragStart = (e, taskId) => e.dataTransfer.setData("taskId", taskId);
+    // Lejon zonën tjetër të pranojë "lëshimin" e detyrës
     const onDragOver = (e) => e.preventDefault();
+    // Kur lëshojmë detyrën në një kolonë të re ('To Do' ose 'Done')
     const onDrop = (e, newStatus) => {
-        const taskId = e.dataTransfer.getData("taskId");
-        handleUpdateStatus(taskId, newStatus);
+        const taskId = e.dataTransfer.getData("taskId"); // Marrim ID-në e ruajtur
+        handleUpdateStatus(taskId, newStatus); // Përditësojmë statusin në databazë
     };
 
+    // --- FUNKSIONI PËR NGARKIMIN E SKEDARËVE ---
     const handleFileUpload = async (taskId) => {
         const file = selectedFile[taskId];
         if (!file || file.length === 0) return;
-        const formData = new FormData();
-        formData.append('file', file); 
+        const formData = new FormData(); // FormData përdoret për të dërguar skedarë (file) në API
+        formData.append('file', file[0]); // Sigurohemi që marrim skedarin e parë të zgjedhur
         formData.append('task_id', taskId);
+        // Header i veçantë 'multipart/form-data' nevojitet kur dërgojmë foto/dokumente
         await axios.post('http://localhost:5001/api/attachments/upload', formData, { headers: { ...headers, 'Content-Type': 'multipart/form-data' } });
         alert("📎 U ngarkua!"); fetchData();
     };
 
+    // --- SHTIMI I KOMENTEVE ---
     const handleAddComment = async (taskId) => {
         if (!commentText[taskId]) return;
         await axios.post(`http://localhost:5001/api/comments`, { taskId, komenti: commentText[taskId] }, { headers });
@@ -108,6 +127,98 @@ const ProjectDetails = () => {
         (t.titulli || "").toLowerCase().includes(searchTerm.toLowerCase()) &&
         (!selectedSprint || Number(t.sprint_id) === Number(selectedSprint))
     );
+
+    // Krijojmë të dhënat për Gantt
+    // Hapi 1: Marrim vetëm detyrat që kanë data të sakta, përndryshe grafiku do të "krashte"
+    const validTasksWithDates = tasks.filter(t => {
+        if (!t.data_fillimit || !t.data_afatit) return false;
+        const s = new Date(t.data_fillimit);
+        const e = new Date(t.data_afatit);
+        return !isNaN(s.getTime()) && !isNaN(e.getTime()); // Kontrollon nëse datat janë reale
+    });
+    
+    // Ruajmë ID-të e vlefshme për të kontrolluar varësitë më vonë
+    const validIds = validTasksWithDates.map(t => t.id.toString());
+
+    // Hapi 2: Përshtatim të dhënat tona në formatin specifik që kërkon libraria `gantt-task-react`
+    const ganttTasks = validTasksWithDates.map(t => {
+        const start = new Date(t.data_fillimit);
+        const end = new Date(t.data_afatit);
+        
+        // Nëse fillimi dhe mbarimi janë në të njëjtën ditë, libraria Gantt kërkon të paktën 1 ditë distancë që të vizatohet drejt
+        if (start.getTime() === end.getTime()) {
+            end.setDate(end.getDate() + 1);
+        }
+        
+        let deps = [];
+        if (t.depends_on_task_id) {
+            const depId = t.depends_on_task_id.toString();
+            if (validIds.includes(depId)) {
+                deps = [depId];
+            }
+        }
+
+        return {
+            start,
+            end,
+            name: t.titulli || 'E paemërtuar',
+            id: t.id.toString(),
+            type: 'task',
+            progress: t.statusi === 'Done' ? 100 : 0,
+            isDisabled: false,
+            dependencies: deps
+        };
+    });
+
+    // --- LOGJIKA E GRAFIKUT BURNDOWN ---
+    // Ky graf tregon se sa shpejt po mbyllen detyrat krahasuar me kohën e mbetur (Ideale vs Reale)
+    useEffect(() => {
+        if (selectedSprint && viewMode === 'burndown') {
+            api.get(`/api/sprints/${selectedSprint}/burndown`).then(res => {
+                const { sprint, tasks } = res.data;
+                const totalTasks = tasks.length;
+                let remaining = totalTasks; // Fillon me numrin total të detyrave
+                
+                // Gruponi detyrat e përfunduara ('Done') bazuar në datën e përfundimit të tyre
+                const completedByDate = {};
+                tasks.filter(t => t.statusi === 'Done' && t.completed_at).forEach(t => {
+                    const d = new Date(t.completed_at).toLocaleDateString();
+                    completedByDate[d] = (completedByDate[d] || 0) + 1; // Rrit numëruesin për çdo detyrë në atë datë
+                });
+
+                // Këto do jenë pikat në boshtin X (datat)
+                const labels = ['Start', ...Object.keys(completedByDate)];
+                // Këto do jenë pikat në boshtin Y (numri i detyrave të mbetura)
+                const dataPoints = [totalTasks];
+                
+                Object.keys(completedByDate).forEach(date => {
+                    remaining -= completedByDate[date];
+                    dataPoints.push(remaining);
+                });
+
+                setBurndownData({
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Detyra të mbetura (Real)',
+                            data: dataPoints,
+                            borderColor: '#34d399',
+                            backgroundColor: 'rgba(52,211,153,0.2)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Ecuria Ideale',
+                            data: [totalTasks, 0], // Vetëm start dhe fund për vijë të drejtë (ideal case)
+                            borderColor: 'rgba(255,255,255,0.2)',
+                            borderDash: [5, 5],
+                            tension: 0
+                        }
+                    ]
+                });
+            }).catch(console.error);
+        }
+    }, [selectedSprint, viewMode]);
 
     return (
         <div className="page-container animate__animated animate__fadeIn">
@@ -185,9 +296,26 @@ const ProjectDetails = () => {
                 </div>
 
                 <div className="mb-4">
-                    <AddTask projectId={id} onTaskAdded={fetchData} />
+                    <style>{`
+                        .ql-toolbar { background: rgba(255,255,255,0.1); border: none !important; border-bottom: 1px solid rgba(255,255,255,0.1) !important; border-top-left-radius: 10px; border-top-right-radius: 10px; }
+                        .ql-toolbar button { filter: invert(1); }
+                        .ql-container { border: none !important; min-height: 80px; }
+                        .ql-editor { color: white; font-size: 13px; }
+                    `}</style>
+                    <AddTask projectId={id} onTaskAdded={fetchData} existingTasks={tasks} />
                 </div>
 
+                {/* ZGJEDHJA E PAMJES */}
+                <div className="d-flex mb-4 gap-2 border-bottom pb-3 align-items-center" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+                    <button onClick={() => setViewMode('board')} className={`btn btn-sm px-4 rounded-pill fw-bold ${viewMode === 'board' ? 'btn-premium' : 'btn-outline-light'}`}>Kanban Board</button>
+                    <button onClick={() => setViewMode('gantt')} className={`btn btn-sm px-4 rounded-pill fw-bold ${viewMode === 'gantt' ? 'btn-premium' : 'btn-outline-light'}`}>Timeline (Gantt)</button>
+                    {selectedSprint && (
+                        <button onClick={() => setViewMode('burndown')} className={`btn btn-sm px-4 rounded-pill fw-bold ms-auto ${viewMode === 'burndown' ? 'btn-premium' : 'btn-outline-light'}`}>🔥 Burndown Chart</button>
+                    )}
+                </div>
+
+                {viewMode === 'board' ? (
+                <>
                 {/* BOARD */}
                 <div className="row g-4 justify-content-center mt-2">
                     {['To Do', 'Done'].map(status => (
@@ -228,7 +356,7 @@ const ProjectDetails = () => {
                                             </div>
 
                                             <h6 className={`fw-bold mb-1`} style={{ fontSize: '14px', color: 'var(--text-main)', opacity: status === 'Done' ? 0.6 : 1, textDecoration: status === 'Done' ? 'line-through' : 'none' }}>{t.titulli}</h6>
-                                            <p className="mb-3" style={{ fontSize: '12px', color: 'var(--text-light)' }}>{t.pershkrimi}</p>
+                                            <div className="mb-3 quill-content" style={{ fontSize: '12px', color: 'var(--text-light)' }} dangerouslySetInnerHTML={{ __html: t.pershkrimi || '' }}></div>
 
                                             {/* SHFAQJA E FOTOVE (Poshtë përshkrimit) */}
 {Array.isArray(t.attachments) && t.attachments.length > 0 && (
@@ -279,7 +407,7 @@ const ProjectDetails = () => {
                                                 <div className="d-flex gap-1 mb-2">
                                                     <div className="input-group input-group-sm">
                                                         <input type="file" className="form-control border-0 text-white" style={{fontSize:'9px', background: 'transparent'}} onChange={(e) => setSelectedFile({...selectedFile, [t.id]: e.target.files})} />
-                                                        <button className="btn text-white border-start" style={{borderColor: 'rgba(255,255,255,0.1)'}} onClick={() => handleFileUpload(t.id)} style={{fontSize:'9px'}}>📎</button>
+                                                        <button className="btn text-white border-start" style={{borderColor: 'rgba(255,255,255,0.1)', fontSize:'9px'}} onClick={() => handleFileUpload(t.id)}>📎</button>
                                                     </div>
                                                     <div className="input-group input-group-sm">
                                                         <input type="text" className="form-control border-0 text-white" placeholder="Shto koment..." style={{fontSize:'9px', background: 'transparent'}} value={commentText[t.id] || ''} onChange={(e) => setCommentText({...commentText, [t.id]: e.target.value})} />
@@ -299,6 +427,54 @@ const ProjectDetails = () => {
                         </div>
                     ))}
                 </div>
+                </>
+                ) : (
+                <div className="premium-card p-4" style={{ overflowX: 'auto', background: 'rgba(255,255,255,0.05)' }}>
+                    {ganttTasks.length > 0 ? (
+                        <div style={{ minWidth: '800px' }}>
+                            <Gantt 
+                                tasks={ganttTasks} 
+                                viewMode={ViewMode.Day}
+                                listCellWidth="155px"
+                                columnWidth={60}
+                                arrowColor="var(--accent)"
+                            />
+                            <style>{`
+                                /* Fix text color for Gantt */
+                                .gantt-task-react text { fill: #000 !important; }
+                                .gantt-task-react .bar-label { fill: #fff !important; font-weight: bold; }
+                                .gantt-task-react .grid-row { fill: transparent !important; }
+                            `}</style>
+                        </div>
+                    ) : (
+                        <div className="text-center p-5 text-muted small">
+                            Nuk ka detyra me data të përcaktuara për t'u shfaqur në Timeline. Sigurohuni që detyrat të kenë "Datë Fillimi" dhe "Datë Mbarimi".
+                        </div>
+                    )}
+                </div>
+                )}
+                {viewMode === 'burndown' && (
+                    <div className="premium-card p-4">
+                        <h5 className="fw-bold text-uppercase mb-4" style={{ color: 'var(--accent)' }}>Burndown Chart - Faza {sprints.find(s => s.id === selectedSprint)?.emertimi}</h5>
+                        {burndownData ? (
+                            <div style={{ height: '400px' }}>
+                                <Line 
+                                    data={burndownData} 
+                                    options={{
+                                        responsive: true, maintainAspectRatio: false,
+                                        scales: {
+                                            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#fff' } },
+                                            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#fff' } }
+                                        },
+                                        plugins: { legend: { labels: { color: '#fff' } } }
+                                    }} 
+                                />
+                            </div>
+                        ) : (
+                            <div className="text-center p-5 text-muted small">Nuk ka të dhëna të mjaftueshme për këtë fazë.</div>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );
