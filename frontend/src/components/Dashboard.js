@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api';
 import { Link } from 'react-router-dom';
-import AddProject from './AddProject';
+import AddProject from './AddProject.js';
 import DashboardStats from './DashboardStats';
 
 // ============================================================================

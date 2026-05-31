@@ -159,7 +159,7 @@ const Settings = () => {
                                     <span className="small font-monospace" style={{ color: 'var(--text-main)' }}>{ngjyra.toUpperCase()}</span>
                                 </div>
                             </div>
-                            <button className="btn btn-premium w-100 py-2" style={{fontSize: '11px', letterSpacing: '1px'}}>RUAJ ETIKETËN</button>
+                            <button className="btn btn-dark w-100 fw-bold rounded-pill shadow-sm py-2" style={{fontSize: '11px'}}>RUAJ ETIKETËN</button>
                         </form>
                     </div>
                 </div>
