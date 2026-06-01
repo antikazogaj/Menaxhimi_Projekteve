@@ -3,26 +3,31 @@ import api from '../api';
 import { useNavigate, Link } from 'react-router-dom';
 
 const Register = () => {
+    // Ruajmë të dhënat e formës së regjistrimit
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
+    // Ky funksion thirret kur përdoruesi klikon butonin "Regjistrohu"
     const handleRegister = async (e) => {
-        e.preventDefault();
+        e.preventDefault(); // Nuk e lejon faqen të rifreskohet
         setLoading(true);
         try {
+            // Dërgojmë të dhënat në backend me metodën POST (për krijim rekordesh)
             const response = await api.post('/api/users/register', { name, email, password });
 
+            // Nëse përgjigja është OK (201 do të thotë Created)
             if (response.status === 201 || response.status === 200) {
                 alert("✅ Sukses: U regjistruat në databazë! Tani mund të kyçeni.");
-                navigate('/login');
+                navigate('/login'); // E dërgojmë përdoruesin në faqen e Kyçjes
             }
         } catch (error) {
             console.error("Detajet e gabimit:", error);
             let mesazhi = "Gabim gjatë regjistrimit.";
             
+            // Nëse email-i ekziston tashmë, Backend e kthen këtë error dhe ne e shfaqim
             if (error.response) {
                 mesazhi = error.response.data.message || "Gabim i panjohur nga serveri";
             }

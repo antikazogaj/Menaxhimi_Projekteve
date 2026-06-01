@@ -25,10 +25,11 @@ const getProjectTasks = async (req, res) => {
     try {
         const { id } = req.params;
         const sql = `
-            SELECT t.*, l.emertimi as label_emertimi, l.ngjyra, l.id as label_id
+            SELECT t.*, l.emertimi as label_emertimi, l.ngjyra, l.id as label_id, u.name as assigned_to_name
             FROM tasks t
             LEFT JOIN task_labels tl ON t.id = tl.task_id
             LEFT JOIN labels l ON tl.label_id = l.id
+            LEFT JOIN users u ON t.assigned_to = u.id
             WHERE t.project_id = ?
         `;
         const [tasks] = await db.query(sql, [id]);
@@ -59,11 +60,12 @@ const getProjectTasks = async (req, res) => {
 // 3. Krijo detyrë
 const createTask = async (req, res) => {
     try {
-        const { project_id, titulli, pershkrimi, statusi, data_afatit, prioriteti, label_id, sprint_id } = req.body;
+        const { project_id, titulli, pershkrimi, statusi, data_fillimit, data_afatit, prioriteti, label_id, sprint_id, depends_on_task_id, assigned_to } = req.body;
         const taskId = await Task.create({
             project_id, titulli, pershkrimi: pershkrimi || '',
-            statusi: statusi || 'To Do', data_afatit,
-            prioriteti: prioriteti || 'Medium', sprint_id: sprint_id || null
+            statusi: statusi || 'To Do', data_fillimit, data_afatit,
+            prioriteti: prioriteti || 'Medium', sprint_id: sprint_id || null, depends_on_task_id: depends_on_task_id || null,
+            assigned_to: assigned_to || null
         });
         if (label_id) await db.query("INSERT INTO task_labels (task_id, label_id) VALUES (?, ?)", [taskId, label_id]);
         res.status(201).json({ id: taskId });
@@ -87,7 +89,21 @@ const updateTaskStatus = async (req, res) => {
 // 5. Fshij detyrë
 const deleteTask = async (req, res) => {
     try {
-        await Task.delete(req.params.id);
+        const taskId = req.params.id;
+        const userId = req.user.id;
+        
+        // Gjejmë project_id të detyrës
+        const [taskData] = await db.query("SELECT project_id FROM tasks WHERE id = ?", [taskId]);
+        if (taskData.length === 0) return res.status(404).json({ error: "Detyra nuk u gjet" });
+        const projectId = taskData[0].project_id;
+        
+        // Verifikojmë rolin në projekt
+        const [memberData] = await db.query("SELECT roli_ne_projekt FROM project_members WHERE project_id = ? AND user_id = ?", [projectId, userId]);
+        if (memberData.length === 0 || memberData[0].roli_ne_projekt !== 'Admin') {
+            return res.status(403).json({ error: "Nuk keni të drejtë të fshini detyra!" });
+        }
+
+        await Task.delete(taskId);
         res.status(200).json({ message: "U fshi!" });
     } catch (error) {
         res.status(500).json({ error: error.message });

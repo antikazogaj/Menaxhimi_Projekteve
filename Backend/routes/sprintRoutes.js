@@ -41,6 +41,19 @@ router.post('/', verifyToken, async (req, res) => {
 router.delete('/:id', verifyToken, async (req, res) => {
     try {
         const { id } = req.params; // ID-ja e sprintit që do fshihet
+        const userId = req.user.id;
+        
+        // Gjejmë project_id të sprintit
+        const [sprintData] = await db.query("SELECT project_id FROM sprints WHERE id = ?", [id]);
+        if (sprintData.length === 0) return res.status(404).json({ message: "Faza nuk u gjet" });
+        const projectId = sprintData[0].project_id;
+        
+        // Verifikojmë rolin në projekt
+        const [memberData] = await db.query("SELECT roli_ne_projekt FROM project_members WHERE project_id = ? AND user_id = ?", [projectId, userId]);
+        if (memberData.length === 0 || memberData[0].roli_ne_projekt !== 'Admin') {
+            return res.status(403).json({ message: "Nuk keni të drejtë të fshini faza!" });
+        }
+
         await db.query("DELETE FROM sprints WHERE id = ?", [id]);
         
         // Pjesë e rëndësishme e logjikës:

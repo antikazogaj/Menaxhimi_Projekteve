@@ -9,10 +9,10 @@ const db = mysql.createPool({
 
 const Task = {
     create: async (data) => {
-        const { project_id, titulli, pershkrimi, statusi, data_fillimit, data_afatit, prioriteti, sprint_id, depends_on_task_id } = data;
+        const { project_id, titulli, pershkrimi, statusi, data_fillimit, data_afatit, prioriteti, sprint_id, depends_on_task_id, assigned_to } = data;
         const [result] = await db.query(
-            "INSERT INTO tasks (project_id, titulli, pershkrimi, statusi, data_fillimit, data_afatit, prioriteti, sprint_id, depends_on_task_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            [project_id, titulli, pershkrimi, statusi, data_fillimit || null, data_afatit || null, prioriteti, sprint_id || null, depends_on_task_id || null]
+            "INSERT INTO tasks (project_id, titulli, pershkrimi, statusi, data_fillimit, data_afatit, prioriteti, sprint_id, depends_on_task_id, assigned_to) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [project_id, titulli, pershkrimi, statusi, data_fillimit || null, data_afatit || null, prioriteti, sprint_id || null, depends_on_task_id || null, assigned_to || null]
         );
         return result.insertId;
     },

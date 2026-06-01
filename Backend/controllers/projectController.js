@@ -22,17 +22,27 @@ const getAllProjects = async (req, res) => {
     }
 };
 
-// 2. Funksioni për krijimin e një projekti të ri (CREATE) + AUTO SPRINT
+// 2. Funksioni për krijimin e një projekti të ri (CREATE) + AUTO SPRINT + AUTO ADMIN
 const createProject = async (req, res) => {
     try {
         if (!req.body.emertimi) {
             return res.status(400).json({ message: "Emërtimi i projektit është i detyrueshëm!" });
         }
 
+        // Marrim ID-në e përdoruesit që po krijon projektin (nga tokeni JWT)
+        const userId = req.user.id;
+
         // 1. Krijojmë projektin
         const projectId = await Project.create(req.body);
 
-        // 2. SHTESA: Krijojmë automatikisht Sprintin e parë që projekti mos të dalë bosh
+        // 2. SHTESA: Krijuesi i projektit shtohet automatikisht si Admin i projektit
+        // Kjo siguron që ai të ketë leje të plota (fshirje detyrave, fazave, etj.)
+        await db.query(
+            "INSERT INTO project_members (project_id, user_id, roli_ne_projekt) VALUES (?, ?, ?)", 
+            [projectId, userId, 'Admin']
+        );
+
+        // 3. SHTESA: Krijojmë automatikisht Sprintin e parë që projekti mos të dalë bosh
         await db.query(
             "INSERT INTO sprints (project_id, emertimi, statusi) VALUES (?, ?, ?)", 
             [projectId, 'Sprint 1: Fillimi i Projektit', 'Active']
