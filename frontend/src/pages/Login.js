@@ -3,32 +3,41 @@ import api from '../api';
 import { useNavigate, Link } from 'react-router-dom';
 
 const Login = () => {
+    // Ruajmë emailin dhe fjalëkalimin që shkruan përdoruesi
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(false); // Për të treguar gjendjen "Duke u kyçur..."
     const navigate = useNavigate();
 
+    // Ky funksion thirret kur shtypet butoni 'Kyçu Tani'
     const handleLogin = async (e) => {
-        e.preventDefault();
+        e.preventDefault(); // Ndalon rifreskimin e faqes kur bëjmë Submit
         setLoading(true);
         try {
-            localStorage.clear();
+            localStorage.clear(); // Pastrojmë të dhënat e vjetra (nëse ka mbetur ndonjë sesion i vjetër)
+            
+            // Dërgojmë kërkesën tek Backend (Express) për verifikim
             const response = await api.post('/api/users/login', { email, password });
             
+            // Nëse kredencialet janë të sakta, serveri kthen një Token (pasaportë dixhitale)
             if (response.data.token) {
+                // E ruajmë token-in lokalisht që mos t'ia kërkojmë prapë përdoruesit
                 localStorage.setItem('token', response.data.token);
-                localStorage.setItem('role', response.data.role);
+                localStorage.setItem('role', response.data.role); // Roli (P.sh. Admin ose User)
                 localStorage.setItem('userName', response.data.name);
+                
+                // Pas kyçjes së suksesshme, e kalojmë tek Dashboard (faqja kryesore)
                 window.location.href = '/'; 
             } else {
                 alert(" Gabim: Serveri nuk dërgoi të dhënat e sakta.");
             }
         } catch (error) {
+            // Nëse marrim 401 (Unauthorized) ose ndonjë gabim tjetër
             console.error("Detajet e gabimit:", error.response?.data);
             const msg = error.response?.data?.message || "Email ose fjalëkalim i gabuar!";
             alert("❌ " + msg);
         } finally {
-            setLoading(false);
+            setLoading(false); // Ndalim rrotullimin (loading) pavarësisht rezultatit
         }
     };
 

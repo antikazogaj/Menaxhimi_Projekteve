@@ -88,8 +88,12 @@ const ProjectDetails = () => {
     const handleDeleteSprint = async (sId, e) => {
         e.stopPropagation();
         if (window.confirm("Fshij fazën?")) {
-            await axios.delete(`http://localhost:5001/api/sprints/${sId}`, { headers });
-            fetchData();
+            try {
+                await axios.delete(`http://localhost:5001/api/sprints/${sId}`, { headers });
+                fetchData();
+            } catch (error) {
+                alert(error.response?.data?.message || "Nuk keni të drejtë të fshini faza!");
+            }
         }
     };
 
@@ -238,7 +242,7 @@ const ProjectDetails = () => {
                 
                 {/* KERKIMI */}
                 <div className="d-flex justify-content-end mb-4">
-                    <div className="shadow-sm rounded-pill px-3 py-1 d-flex align-items-center" style={{ width: '250px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <div className="shadow-sm rounded-pill px-3 py-1 d-flex align-items-center" style={{ width: '250px', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
                         <span className="me-2 text-muted small"></span>
                         <input type="text" className="form-control border-0 shadow-none p-0 bg-transparent text-white" style={{ fontSize: '12px' }} placeholder="Kërko..." onChange={(e) => setSearchTerm(e.target.value)} />
                     </div>
@@ -252,7 +256,7 @@ const ProjectDetails = () => {
                             
                             {/* FORMA E RIKTHYER E EKIPIT */}
                             <form onSubmit={handleAddMember} className="d-flex gap-1 mb-2">
-                                <input type="email" className="form-control form-control-sm border-0 rounded-pill px-3 text-white" style={{ fontSize: '10px', background: 'rgba(0,0,0,0.2)' }} placeholder="Shto me email..." value={email} onChange={(e) => setEmail(e.target.value)} required />
+                                <input type="email" className="form-control form-control-sm border-0 rounded-pill px-3 text-white" style={{ fontSize: '10px', background: 'var(--glass-bg)' }} placeholder="Shto me email..." value={email} onChange={(e) => setEmail(e.target.value)} required />
                                 <button type="submit" className="btn btn-premium btn-sm rounded-circle fw-bold" style={{ padding: '0 8px' }}>+</button>
                             </form>
 
@@ -279,36 +283,37 @@ const ProjectDetails = () => {
                 </div>
 
                 {/* SPRINTS (ME FORMËN E SPRINTIT TË RI) */}
-                <div className="d-flex align-items-center gap-2 mb-4 overflow-auto pb-2 border-bottom" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
-                    <button onClick={() => setSelectedSprint(null)} className={`btn btn-xs rounded-pill px-3 fw-bold ${!selectedSprint ? 'btn-premium' : 'text-light'}`} style={{ fontSize: '10px', background: !selectedSprint ? '' : 'rgba(0,0,0,0.2)' }}>Gjitha</button>
+                <div className="d-flex align-items-center gap-2 mb-4 overflow-auto pb-2 border-bottom" style={{ borderColor: 'var(--glass-border)' }}>
+                    <button onClick={() => setSelectedSprint(null)} className={`btn btn-xs rounded-pill px-3 fw-bold ${!selectedSprint ? 'btn-premium' : 'text-light'}`} style={{ fontSize: '10px', background: !selectedSprint ? '' : 'var(--glass-bg)' }}>Gjitha</button>
                     {sprints.map((s) => (
                         <div key={s.id} className="position-relative">
-                            <button onClick={() => setSelectedSprint(s.id)} className={`btn btn-xs rounded-pill px-3 fw-bold border ${selectedSprint === s.id ? 'btn-premium' : 'text-light'}`} style={{ fontSize: '10px', whiteSpace: 'nowrap', background: selectedSprint === s.id ? '' : 'rgba(0,0,0,0.2)', borderColor: 'rgba(255,255,255,0.1)' }}>{s.emertimi}</button>
+                            <button onClick={() => setSelectedSprint(s.id)} className={`btn btn-xs rounded-pill px-3 fw-bold border ${selectedSprint === s.id ? 'btn-premium' : 'text-light'}`} style={{ fontSize: '10px', whiteSpace: 'nowrap', background: selectedSprint === s.id ? '' : 'var(--glass-bg)', borderColor: 'var(--glass-border)' }}>{s.emertimi}</button>
                             <span onClick={(e) => handleDeleteSprint(s.id, e)} className="ms-1 text-danger cursor-pointer fw-bold" style={{ fontSize: '10px' }}>×</span>
                         </div>
                     ))}
                     
                     {/* FORMA E RIKTHYER E SPRINTIT */}
                     <form onSubmit={handleAddSprint} className="d-flex gap-1 ms-auto">
-                        <input type="text" className="form-control form-control-sm border-0 rounded-pill px-2 shadow-sm text-white" placeholder="Faza..." value={newSprintName} onChange={(e) => setNewSprintName(e.target.value)} style={{ width: '70px', fontSize: '10px', background: 'rgba(0,0,0,0.2)' }} />
+                        <input type="text" className="form-control form-control-sm border-0 rounded-pill px-2 shadow-sm text-white" placeholder="Faza..." value={newSprintName} onChange={(e) => setNewSprintName(e.target.value)} style={{ width: '70px', fontSize: '10px', background: 'var(--glass-bg)' }} />
                         <button type="submit" className="btn btn-premium btn-sm rounded-circle" style={{ padding: '0 8px' }}>+</button>
                     </form>
                 </div>
 
                 <div className="mb-4">
                     <style>{`
-                        .ql-toolbar { background: rgba(255,255,255,0.1); border: none !important; border-bottom: 1px solid rgba(255,255,255,0.1) !important; border-top-left-radius: 10px; border-top-right-radius: 10px; }
+                        .ql-toolbar { background: var(--glass-bg); border: none !important; border-bottom: 1px solid var(--glass-border) !important; border-top-left-radius: 10px; border-top-right-radius: 10px; }
                         .ql-toolbar button { filter: invert(1); }
+                        [data-theme="light"] .ql-toolbar button { filter: none; }
                         .ql-container { border: none !important; min-height: 80px; }
-                        .ql-editor { color: white; font-size: 13px; }
+                        .ql-editor { color: var(--text-main); font-size: 13px; }
                     `}</style>
-                    <AddTask projectId={id} onTaskAdded={fetchData} existingTasks={tasks} />
+                    <AddTask projectId={id} onTaskAdded={fetchData} existingTasks={tasks} members={members} />
                 </div>
 
                 {/* ZGJEDHJA E PAMJES */}
                 <div className="d-flex mb-4 gap-2 border-bottom pb-3 align-items-center" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
-                    <button onClick={() => setViewMode('board')} className={`btn btn-sm px-4 rounded-pill fw-bold ${viewMode === 'board' ? 'btn-premium' : 'btn-outline-light'}`}>Kanban Board</button>
-                    <button onClick={() => setViewMode('gantt')} className={`btn btn-sm px-4 rounded-pill fw-bold ${viewMode === 'gantt' ? 'btn-premium' : 'btn-outline-light'}`}>Timeline (Gantt)</button>
+                    <button onClick={() => setViewMode('board')} className={`btn btn-sm px-4 rounded-pill fw-bold ${viewMode === 'board' ? 'btn-premium' : 'btn-outline-light'}`}>Tabela e Detyrave</button>
+                    <button onClick={() => setViewMode('gantt')} className={`btn btn-sm px-4 rounded-pill fw-bold ${viewMode === 'gantt' ? 'btn-premium' : 'btn-outline-light'}`}>Pamja Kohore (Gantt)</button>
                     {selectedSprint && (
                         <button onClick={() => setViewMode('burndown')} className={`btn btn-sm px-4 rounded-pill fw-bold ms-auto ${viewMode === 'burndown' ? 'btn-premium' : 'btn-outline-light'}`}>🔥 Burndown Chart</button>
                     )}
@@ -352,10 +357,25 @@ const ProjectDetails = () => {
                                                     <option value="">+ ETIKETË</option>
                                                     {allLabels.map(l => <option key={l.id} value={l.id}>{l.emertimi.toUpperCase()}</option>)}
                                                 </select>
-                                                <button onClick={() => { if(window.confirm("Fshij?")) axios.delete(`http://localhost:5001/api/tasks/${t.id}`, {headers}).then(fetchData) }} className="btn btn-link text-muted p-0" style={{fontSize:'12px'}}>delete</button>
+                                                <button onClick={() => { 
+                                                    if(window.confirm("Fshij?")) {
+                                                        axios.delete(`http://localhost:5001/api/tasks/${t.id}`, {headers})
+                                                            .then(fetchData)
+                                                            .catch(err => alert(err.response?.data?.error || err.response?.data?.message || "Nuk keni të drejtë të fshini detyra!"));
+                                                    }
+                                                }} className="btn btn-link text-muted p-0" style={{fontSize:'12px'}}>delete</button>
                                             </div>
 
                                             <h6 className={`fw-bold mb-1`} style={{ fontSize: '14px', color: 'var(--text-main)', opacity: status === 'Done' ? 0.6 : 1, textDecoration: status === 'Done' ? 'line-through' : 'none' }}>{t.titulli}</h6>
+                                            
+                                            {t.assigned_to_name && (
+                                                <div className="mb-2">
+                                                    <span className="badge rounded-pill" style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--text-main)', fontSize: '9px', fontWeight: 'normal' }}>
+                                                        👤 {t.assigned_to_name}
+                                                    </span>
+                                                </div>
+                                            )}
+
                                             <div className="mb-3 quill-content" style={{ fontSize: '12px', color: 'var(--text-light)' }} dangerouslySetInnerHTML={{ __html: t.pershkrimi || '' }}></div>
 
                                             {/* SHFAQJA E FOTOVE (Poshtë përshkrimit) */}
@@ -429,7 +449,7 @@ const ProjectDetails = () => {
                 </div>
                 </>
                 ) : (
-                <div className="premium-card p-4" style={{ overflowX: 'auto', background: 'rgba(255,255,255,0.05)' }}>
+                <div className="premium-card p-4" style={{ overflowX: 'auto', background: 'var(--glass-bg)' }}>
                     {ganttTasks.length > 0 ? (
                         <div style={{ minWidth: '800px' }}>
                             <Gantt 

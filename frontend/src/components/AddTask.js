@@ -3,7 +3,7 @@ import api from '../api';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 
-const AddTask = ({ projectId, onTaskAdded, existingTasks = [] }) => {
+const AddTask = ({ projectId, onTaskAdded, existingTasks = [], members = [] }) => {
     // --- STATE VARIABLES ---
     // Ruajnë vlerat që përdoruesi po shkruan në format e tyre përkatëse
     const [titulli, setTitulli] = useState('');
@@ -14,6 +14,7 @@ const AddTask = ({ projectId, onTaskAdded, existingTasks = [] }) => {
     const [prioriteti, setPrioriteti] = useState('Medium');
     const [sprintId, setSprintId] = useState(''); 
     const [dependsOnTaskId, setDependsOnTaskId] = useState(''); // Për Gantt Chart, nga cila detyrë varet
+    const [assignedTo, setAssignedTo] = useState(''); // Përdoruesi që i caktohet detyra
     
     // Këto lista mbushen me të dhëna nga databaza për të shfaqur opsionet në "Select"
     const [labels, setLabels] = useState([]);
@@ -47,11 +48,12 @@ const AddTask = ({ projectId, onTaskAdded, existingTasks = [] }) => {
                 project_id: Number(projectId), titulli, pershkrimi, sprint_id: sprintId || null,
                 data_fillimit: dataFillimit || null, data_afatit: dataAfatit || null, 
                 label_id: labelId || null, prioriteti, statusi: 'To Do',
-                depends_on_task_id: dependsOnTaskId || null
+                depends_on_task_id: dependsOnTaskId || null,
+                assigned_to: assignedTo || null
             });
             
             // Pasi ruhet me sukses, pastrojmë të gjitha fushat e formës
-            setTitulli(''); setPershkrimi(''); setDataFillimit(''); setDataAfatit(''); setLabelId(''); setSprintId(''); setDependsOnTaskId('');
+            setTitulli(''); setPershkrimi(''); setDataFillimit(''); setDataAfatit(''); setLabelId(''); setSprintId(''); setDependsOnTaskId(''); setAssignedTo('');
             
             // Njoftojmë komponentin prind (`ProjectDetails`) që të rifreskojë listën e detyrave
             onTaskAdded(); 
@@ -95,6 +97,13 @@ const AddTask = ({ projectId, onTaskAdded, existingTasks = [] }) => {
                         <select className="form-select border-0 py-2" value={labelId} onChange={(e) => setLabelId(e.target.value)} style={{ borderRadius: '10px', fontSize: '13px', background: 'rgba(0,0,0,0.2)' }}>
                             <option value="">Pa</option>
                             {labels.map(l => <option key={l.id} value={l.id}>{l.emertimi}</option>)}
+                        </select>
+                    </div>
+                    <div className="col-md-2">
+                        <label className="fw-bold text-muted mb-2" style={{ fontSize: '10px' }}>CAKTO TEK (Opcion)</label>
+                        <select className="form-select border-0 py-2" value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)} style={{ borderRadius: '10px', fontSize: '13px', background: 'rgba(0,0,0,0.2)' }}>
+                            <option value="">Pa caktuar</option>
+                            {members.map(m => <option key={m.user_id} value={m.user_id}>{m.name}</option>)}
                         </select>
                     </div>
                     <div className="col-md-2">

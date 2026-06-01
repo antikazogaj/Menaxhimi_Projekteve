@@ -5,6 +5,18 @@ const Sidebar = () => {
     const navigate = useNavigate();
     const token = localStorage.getItem('token');
     
+    // Theme State
+    const [theme, setTheme] = React.useState(localStorage.getItem('theme') || 'dark');
+    
+    React.useEffect(() => {
+        document.body.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+    }, [theme]);
+
+    const toggleTheme = () => {
+        setTheme(theme === 'dark' ? 'light' : 'dark');
+    };
+    
     // Marrja e të dhënave të përdoruesit
     let user = { name: "Shehida", role: "Admin" };
     if (token) {

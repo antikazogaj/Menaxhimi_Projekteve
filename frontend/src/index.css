@@ -14,6 +14,11 @@
   --text-muted: #cbd5e1; /* Brighter muted */
   --text-light: #f1f5f9;
   --text-accent: #e2e8f0;
+
+  /* Glass Colors */
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-bg-hover: rgba(255, 255, 255, 0.2);
+  --glass-border: rgba(255, 255, 255, 0.1);
   
   /* Status Colors (Neon variants) */
   --success: #10b981;
@@ -45,6 +50,50 @@
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
+
+/* --- LIGHT MODE THEME --- */
+[data-theme="light"] {
+  --primary: #6d28d9;
+  --primary-hover: #5b21b6;
+  --secondary: #4f46e5;
+  --accent: #db2777;
+  
+  --background: #f8fafc;
+  --surface: rgba(255, 255, 255, 0.8);
+  
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-light: #334155;
+  --text-accent: #1e293b;
+
+  --glass-bg: rgba(0, 0, 0, 0.05);
+  --glass-bg-hover: rgba(0, 0, 0, 0.1);
+  --glass-border: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] body {
+  background: #f8fafc;
+  animation: none;
+}
+
+[data-theme="light"] .glass-panel, [data-theme="light"] .premium-card {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] input, [data-theme="light"] select, [data-theme="light"] textarea {
+  background: rgba(0, 0, 0, 0.03) !important;
+  color: var(--text-main) !important;
+  border: 1px solid var(--glass-border) !important;
+}
+
+[data-theme="light"] input:focus, [data-theme="light"] select:focus {
+  background: #fff !important;
+}
+
+[data-theme="light"] .ql-toolbar button { filter: none; }
+[data-theme="light"] .ql-editor { color: var(--text-main); }
 
 body {
   margin: 0;

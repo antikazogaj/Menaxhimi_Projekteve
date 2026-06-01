@@ -56,9 +56,10 @@ ChartJS.register(centerTextPlugin);
 const Reports = () => {
     const [stats, setStats] = useState({ done: 0, pending: 0 });
     const [loading, setLoading] = useState(true);
-    const [animVal, setAnimVal] = useState(0);
+    const [animVal, setAnimVal] = useState(0); // Për animacionin e përqindjes (nga 0 deri në x%)
     const token = localStorage.getItem('token');
 
+    // Merr statistikat aktuale nga databaza për këtë përdorues
     useEffect(() => {
         const fetchStats = async () => {
             try {
@@ -88,10 +89,11 @@ const Reports = () => {
         fetchStats();
     }, [token]);
 
+    // Llogaritjet e Efikasitetit (rregulla treshe)
     const total = stats.done + stats.pending;
     const efficiency = total > 0 ? Math.round((stats.done / total) * 100) : 0;
 
-    // Animacion counter
+    // --- LOGJIKA E ANIMACIONIT (Rritja numërike nga 0 në X%) ---
     useEffect(() => {
         if (!loading) {
             let start = 0;
@@ -105,6 +107,7 @@ const Reports = () => {
         }
     }, [loading, efficiency]);
 
+    // Konfigurimi i të dhënave për librarinë 'react-chartjs-2' (Grafiku Donut)
     const chartData = {
         labels: ['Të Kryera', 'Në Proces'],
         datasets: [{
