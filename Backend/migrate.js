@@ -24,6 +24,11 @@ async function migrate() {
         } catch (e) { if(e.code !== 'ER_DUP_FIELDNAME') throw e; }
 
         try {
+            await db.query("ALTER TABLE tasks ADD COLUMN assigned_to INT DEFAULT NULL");
+            console.log("Added assigned_to");
+        } catch (e) { if(e.code !== 'ER_DUP_FIELDNAME') throw e; }
+
+        try {
             await db.query("ALTER TABLE tasks ADD COLUMN completed_at DATETIME DEFAULT NULL");
             console.log("Added completed_at");
         } catch (e) { if(e.code !== 'ER_DUP_FIELDNAME') throw e; }
