@@ -77,8 +77,18 @@ const createTask = async (req, res) => {
             assigned_to: assigned_to || null
         });
         if (label_id) await db.query("INSERT INTO task_labels (task_id, label_id) VALUES (?, ?)", [taskId, label_id]);
+
+        // Njoftimi
+        if (assigned_to) {
+            const Notification = require('../models/Notification');
+            const [projectInfo] = await db.query("SELECT emertimi FROM projects WHERE id = ?", [project_id]);
+            const projectName = projectInfo.length > 0 ? projectInfo[0].emertimi : '';
+            await Notification.create(assigned_to, `Jeni caktuar në detyrën: "${titulli}" te projekti ${projectName}`, `/projects/${project_id}`);
+        }
+
         res.status(201).json({ id: taskId });
     } catch (error) {
+        console.error("Gabim në createTask:", error);
         res.status(500).json({ error: error.message });
     }
 };

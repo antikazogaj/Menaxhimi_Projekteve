@@ -32,6 +32,13 @@ const addMemberByEmail = async (req, res) => {
         await db.query("INSERT INTO project_members (project_id, user_id, roli_ne_projekt) VALUES (?, ?, ?)", 
             [project_id, userId, roli || 'Member']);
 
+        // 4. Krijojmë Njoftimin
+        const Notification = require('../models/Notification');
+        const [projectInfo] = await db.query("SELECT emertimi FROM projects WHERE id = ?", [project_id]);
+        if (projectInfo.length > 0) {
+            await Notification.create(userId, `Jeni shtuar në projektin: ${projectInfo[0].emertimi}`, `/projects/${project_id}`);
+        }
+
         res.status(201).json({ message: "Anëtari u shtua me sukses!" });
     } catch (error) {
         res.status(500).json({ message: "Gabim në server", error: error.message });
