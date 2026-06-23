@@ -10,6 +10,7 @@ const Settings = () => {
     // States për Profilin
     const userName = localStorage.getItem('userName');
     const userRole = localStorage.getItem('role');
+    const [avatar, setAvatar] = useState(localStorage.getItem('avatar') || '');
     const [newPassword, setNewPassword] = useState('');
 
     const token = localStorage.getItem('token');
@@ -23,6 +24,28 @@ const Settings = () => {
     };
 
     useEffect(() => { fetchLabels(); }, []);
+
+    const handleAvatarUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('avatar', file);
+
+        try {
+            const res = await axios.post('http://localhost:5001/api/users/avatar', formData, {
+                headers: { ...headers, 'Content-Type': 'multipart/form-data' }
+            });
+            const newAvatarUrl = res.data.avatar_url;
+            setAvatar(newAvatarUrl);
+            localStorage.setItem('avatar', newAvatarUrl);
+            alert("Avatari u përditësua me sukses! (Rifresko faqen për ta parë kudo)");
+            // Rifreskojmë faqen që Navbari ta marrë direkt
+            window.location.reload();
+        } catch (err) {
+            alert("Gabim gjatë ngarkimit të avatarit!");
+        }
+    };
 
     const handleAddLabel = async (e) => {
         e.preventDefault();
@@ -59,8 +82,18 @@ const Settings = () => {
             <div className="premium-card p-4 mb-5">
                 <div className="row align-items-center">
                     <div className="col-md-2 text-center">
-                        <div className="text-white rounded-circle d-inline-flex align-items-center justify-content-center fw-bold shadow-sm" style={{ width: '80px', height: '80px', fontSize: '30px', background: 'linear-gradient(135deg, var(--primary), var(--accent))' }}>
-                            {userName?.charAt(0).toUpperCase()}
+                        <div className="position-relative d-inline-block">
+                            {avatar && avatar !== 'null' ? (
+                                <img src={`http://localhost:5001/uploads/${avatar}`} alt="Avatar" className="rounded-circle object-fit-cover shadow-sm" style={{ width: '80px', height: '80px', border: '3px solid var(--accent)' }} />
+                            ) : (
+                                <div className="text-white rounded-circle d-inline-flex align-items-center justify-content-center fw-bold shadow-sm" style={{ width: '80px', height: '80px', fontSize: '30px', background: 'linear-gradient(135deg, var(--primary), var(--accent))' }}>
+                                    {userName?.charAt(0).toUpperCase()}
+                                </div>
+                            )}
+                            <label className="position-absolute bottom-0 end-0 bg-premium text-white rounded-circle d-flex align-items-center justify-content-center shadow cursor-pointer" style={{ width: '28px', height: '28px', border: '2px solid var(--sidebar-bg)' }} title="Ndërro foton">
+                                <span style={{fontSize:'12px'}}>📷</span>
+                                <input type="file" className="d-none" accept="image/*" onChange={handleAvatarUpload} />
+                            </label>
                         </div>
                     </div>
                     <div className="col-md-6 border-start ps-4">

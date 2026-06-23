@@ -87,9 +87,13 @@ const Sidebar = () => {
             {/* USER PROFILE INFO */}
             <div className="p-4" style={{ borderTop: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)' }}>
                 <div className="d-flex align-items-center gap-3 mb-4">
-                    <div className="text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style={{ width: '40px', height: '40px', fontSize: '14px', background: 'linear-gradient(135deg, var(--primary), var(--accent))', boxShadow: 'var(--shadow-sm)' }}>
-                        {user?.name?.charAt(0).toUpperCase() || "S"}
-                    </div>
+                    {localStorage.getItem('avatar') && localStorage.getItem('avatar') !== 'null' ? (
+                        <img src={`http://localhost:5001/uploads/${localStorage.getItem('avatar')}`} alt="Avatar" className="rounded-circle object-fit-cover shadow-sm" style={{ width: '40px', height: '40px', border: '2px solid var(--accent)' }} />
+                    ) : (
+                        <div className="text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style={{ width: '40px', height: '40px', fontSize: '14px', background: 'linear-gradient(135deg, var(--primary), var(--accent))', boxShadow: 'var(--shadow-sm)' }}>
+                            {user?.name?.charAt(0).toUpperCase() || "S"}
+                        </div>
+                    )}
                     <div>
                         <div className="fw-bold" style={{ fontSize: '13px', lineHeight: '1', color: 'var(--text-main)' }}>
                             {(user?.name || "Shehida")}

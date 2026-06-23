@@ -25,6 +25,7 @@ const Login = () => {
                 localStorage.setItem('token', response.data.token);
                 localStorage.setItem('role', response.data.role); // Roli (P.sh. Admin ose User)
                 localStorage.setItem('userName', response.data.name);
+                localStorage.setItem('avatar', response.data.avatar);
                 
                 // Pas kyçjes së suksesshme, e kalojmë tek Dashboard (faqja kryesore)
                 window.location.href = '/'; 

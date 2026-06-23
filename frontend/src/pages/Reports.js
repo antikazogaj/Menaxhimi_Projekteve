@@ -6,11 +6,12 @@ import {
     Tooltip,
     Legend,
     CategoryScale,
-    LinearScale
+    LinearScale,
+    BarElement
 } from 'chart.js';
-import { Doughnut } from 'react-chartjs-2';
+import { Doughnut, Bar } from 'react-chartjs-2';
 
-ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale);
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
 // Plugin për tekstin në qendër të donut
 const centerTextPlugin = {
@@ -38,9 +39,9 @@ const centerTextPlugin = {
         // Përqindja
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.font = 'bold 36px Inter, sans-serif';
+        ctx.font = 'bold 30px Inter, sans-serif'; // u bë pak më e vogël që 100% të nxërë
         ctx.fillStyle = '#ffffff';
-        ctx.fillText(`${pct}%`, cx, cy - 10);
+        ctx.fillText(`${pct}%`, cx, cy - 8);
 
         // Nëntitulli
         ctx.font = '11px Inter, sans-serif';
@@ -55,6 +56,7 @@ ChartJS.register(centerTextPlugin);
 
 const Reports = () => {
     const [stats, setStats] = useState({ done: 0, pending: 0 });
+    const [timeStats, setTimeStats] = useState([]);
     const [loading, setLoading] = useState(true);
     const [animVal, setAnimVal] = useState(0); // Për animacionin e përqindjes (nga 0 deri në x%)
     const token = localStorage.getItem('token');
@@ -86,7 +88,18 @@ const Reports = () => {
                 setLoading(false);
             }
         };
+        const fetchTimeStats = async () => {
+            try {
+                const res = await axios.get('http://localhost:5001/api/time-logs-stats', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setTimeStats(res.data);
+            } catch (error) {
+                console.error("Gabim te time stats:", error);
+            }
+        };
         fetchStats();
+        fetchTimeStats();
     }, [token]);
 
     // Llogaritjet e Efikasitetit (rregulla treshe)
@@ -301,25 +314,82 @@ const Reports = () => {
                         ))}
 
                         {/* Efikasiteti global */}
-                        <div style={{
-                            marginTop: 'auto',
-                            background: 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(129,140,248,0.05))',
-                            border: '1px solid rgba(99,102,241,0.25)',
-                            borderRadius: 12,
-                            padding: '16px 18px',
-                        }}>
-                            <div className="d-flex justify-content-between align-items-center mb-2">
-                                <span style={{ fontSize: 11, color: '#a5b4fc', fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>
+                        <div className="d-flex justify-content-center mt-auto">
+                            <div style={{
+                                width: '100%',
+                                maxWidth: '320px',
+                                background: 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(129,140,248,0.03))',
+                                border: '1px solid rgba(99,102,241,0.3)',
+                                borderRadius: 16,
+                                padding: '20px',
+                                textAlign: 'center',
+                                boxShadow: '0 8px 24px rgba(0,0,0,0.1)'
+                            }}>
+                                <span style={{ fontSize: 10, color: '#a5b4fc', fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', display: 'block', marginBottom: '10px' }}>
                                     ⚡ Efikasiteti Overall
                                 </span>
-                                <span style={{ fontSize: 24, fontWeight: 900, color: '#fff' }}>{animVal}%</span>
+                                <div className="mb-3" style={{ fontSize: 38, fontWeight: 900, color: '#fff', textShadow: '0 2px 10px rgba(99,102,241,0.5)', lineHeight: 1 }}>
+                                    {animVal}%
+                                </div>
+                                <div className="progress-premium mx-auto" style={{ height: '8px', width: '100%', maxWidth: '200px' }}>
+                                    <div className="progress-premium-fill" style={{ width: `${efficiency}%` }} />
+                                </div>
+                                <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', margin: '12px 0 0', fontWeight: '500' }}>
+                                    {efficiency >= 75 ? '🚀 Shkëlqyeshëm! Vazhdo kështu!' : efficiency >= 50 ? '💪 Mirë, mund të bësh edhe më shumë!' : '📌 Ka hapësirë për përmirësim.'}
+                                </p>
                             </div>
-                            <div className="progress-premium">
-                                <div className="progress-premium-fill" style={{ width: `${efficiency}%` }} />
-                            </div>
-                            <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', margin: '8px 0 0' }}>
-                                {efficiency >= 75 ? '🚀 Shkëlqyeshëm! Vazhdo kështu!' : efficiency >= 50 ? '💪 Mirë, mund të bësh edhe më shumë!' : '📌 Ka hapësirë për përmirësim.'}
-                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* BAR CHART: Koha e Shpenzuar */}
+            <div className="row g-4 mt-2 justify-content-center">
+                <div className="col-md-9">
+                    <div className="premium-card p-4" style={{ borderTop: '3px solid #818cf8', boxShadow: '0 8px 32px rgba(0,0,0,0.15)' }}>
+                        <h5 className="fw-bold mb-4 text-center" style={{ color: '#a5b4fc', fontSize: 13, letterSpacing: 2, textTransform: 'uppercase' }}>
+                            Koha e Shpenzuar (Minuta) nga Anëtarët
+                        </h5>
+                        <div style={{ height: '300px', width: '100%' }}>
+                            <Bar 
+                                data={{
+                                    labels: timeStats.map(s => s.name),
+                                    datasets: [{
+                                        label: 'Minuta Punë',
+                                        data: timeStats.map(s => Number(s.total_minutes)),
+                                        backgroundColor: 'rgba(129,140,248,0.85)',
+                                        borderColor: 'rgba(99,102,241,1)',
+                                        borderWidth: 1,
+                                        borderRadius: 8,
+                                        maxBarThickness: 45
+                                    }]
+                                }} 
+                                options={{
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: { display: false },
+                                        tooltip: {
+                                            backgroundColor: 'rgba(15,15,30,0.95)',
+                                            titleColor: '#a5b4fc',
+                                            bodyColor: '#e2e8f0',
+                                            padding: 12,
+                                            cornerRadius: 8,
+                                        }
+                                    },
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true,
+                                            grid: { color: 'rgba(255,255,255,0.05)', borderDash: [5, 5] },
+                                            ticks: { color: 'rgba(255,255,255,0.6)', font: { size: 10 } }
+                                        },
+                                        x: {
+                                            grid: { display: false },
+                                            ticks: { color: 'rgba(255,255,255,0.8)', font: { size: 11, weight: 'bold' } }
+                                        }
+                                    }
+                                }} 
+                            />
                         </div>
                     </div>
                 </div>
