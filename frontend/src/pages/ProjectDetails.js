@@ -2,8 +2,6 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import AddTask from '../components/AddTask';
-import { Gantt, ViewMode } from 'gantt-task-react';
-import "gantt-task-react/dist/index.css";
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip as ChartTooltip, Legend } from 'chart.js';
 import api from '../api';
@@ -26,6 +24,7 @@ const ProjectDetails = () => {
     const [burndownData, setBurndownData] = useState(null);
     const [commentText, setCommentText] = useState({});
     const [selectedFile, setSelectedFile] = useState({});
+    const [timeLogMinutes, setTimeLogMinutes] = useState({}); // State për inputin e kohës
     const [viewMode, setViewMode] = useState('board'); // 'board' ose 'gantt'
 
     const token = localStorage.getItem('token');
@@ -120,11 +119,33 @@ const ProjectDetails = () => {
         alert("📎 U ngarkua!"); fetchData();
     };
 
-    // --- SHTIMI I KOMENTEVE ---
     const handleAddComment = async (taskId) => {
         if (!commentText[taskId]) return;
         await axios.post(`http://localhost:5001/api/comments`, { taskId, komenti: commentText[taskId] }, { headers });
         setCommentText({ ...commentText, [taskId]: '' }); fetchData();
+    };
+
+    // --- SHTIMI I KOHËS (TIME LOGS) ---
+    const handleAddTimeLog = async (taskId) => {
+        if (!timeLogMinutes[taskId]) return;
+        try {
+            await axios.post(`http://localhost:5001/api/tasks/${taskId}/time-logs`, { durationMinutes: parseInt(timeLogMinutes[taskId]) }, { headers });
+            setTimeLogMinutes({ ...timeLogMinutes, [taskId]: '' });
+            fetchData();
+        } catch (err) {
+            alert(err.response?.data?.error || "Gabim gjatë shtimit të kohës");
+        }
+    };
+
+    const handleDeleteTimeLog = async (logId) => {
+        if(window.confirm("Jeni i sigurt që doni të fshini këtë kohë?")) {
+            try {
+                await axios.delete(`http://localhost:5001/api/time-logs/${logId}`, { headers });
+                fetchData();
+            } catch (err) {
+                alert(err.response?.data?.error || "Nuk keni të drejta për të fshirë këtë log!");
+            }
+        }
     };
 
     const filteredTasks = tasks.filter(t => 
@@ -262,7 +283,14 @@ const ProjectDetails = () => {
 
                             <div className="d-flex flex-wrap gap-1">
                                 {members.map((m, i) => (
-                                    <span key={i} className="badge border rounded-pill fw-normal" style={{ fontSize: '9px', background: 'rgba(255,255,255,0.1)', color: 'var(--text-light)' }}>{m.name}</span>
+                                    <span key={i} className="badge border rounded-pill fw-normal d-flex align-items-center gap-1" style={{ fontSize: '9px', background: 'rgba(255,255,255,0.1)', color: 'var(--text-light)', padding: '4px 8px' }}>
+                                        {m.avatar_url ? (
+                                            <img src={`http://localhost:5001/uploads/${m.avatar_url}`} className="rounded-circle object-fit-cover" style={{width: '12px', height: '12px'}} alt="avatar" />
+                                        ) : (
+                                            <span style={{fontSize:'9px'}}>👤</span>
+                                        )}
+                                        {m.name}
+                                    </span>
                                 ))}
                             </div>
                         </div>
@@ -313,13 +341,12 @@ const ProjectDetails = () => {
                 {/* ZGJEDHJA E PAMJES */}
                 <div className="d-flex mb-4 gap-2 border-bottom pb-3 align-items-center" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
                     <button onClick={() => setViewMode('board')} className={`btn btn-sm px-4 rounded-pill fw-bold ${viewMode === 'board' ? 'btn-premium' : 'btn-outline-light'}`}>Tabela e Detyrave</button>
-                    <button onClick={() => setViewMode('gantt')} className={`btn btn-sm px-4 rounded-pill fw-bold ${viewMode === 'gantt' ? 'btn-premium' : 'btn-outline-light'}`}>Pamja Kohore (Gantt)</button>
                     {selectedSprint && (
                         <button onClick={() => setViewMode('burndown')} className={`btn btn-sm px-4 rounded-pill fw-bold ms-auto ${viewMode === 'burndown' ? 'btn-premium' : 'btn-outline-light'}`}>🔥 Burndown Chart</button>
                     )}
                 </div>
 
-                {viewMode === 'board' ? (
+                {viewMode === 'board' && (
                 <>
                 {/* BOARD */}
                 <div className="row g-4 justify-content-center mt-2">
@@ -369,9 +396,14 @@ const ProjectDetails = () => {
                                             <h6 className={`fw-bold mb-1`} style={{ fontSize: '14px', color: 'var(--text-main)', opacity: status === 'Done' ? 0.6 : 1, textDecoration: status === 'Done' ? 'line-through' : 'none' }}>{t.titulli}</h6>
                                             
                                             {t.assigned_to_name && (
-                                                <div className="mb-2">
+                                                <div className="mb-2 d-flex align-items-center gap-1">
+                                                    {t.assigned_to_avatar ? (
+                                                        <img src={`http://localhost:5001/uploads/${t.assigned_to_avatar}`} className="rounded-circle object-fit-cover" style={{width: '16px', height: '16px'}} alt="avatar" />
+                                                    ) : (
+                                                        <span style={{fontSize:'12px'}}>👤</span>
+                                                    )}
                                                     <span className="badge rounded-pill" style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--text-main)', fontSize: '9px', fontWeight: 'normal' }}>
-                                                        👤 {t.assigned_to_name}
+                                                        {t.assigned_to_name}
                                                     </span>
                                                 </div>
                                             )}
@@ -413,8 +445,15 @@ const ProjectDetails = () => {
         <h6 style={{ fontSize: '9px', color: 'var(--text-muted)' }} className="fw-bold text-uppercase mb-2">Diskutimi:</h6>
         {t.comments.map((c, idx) => (
             <div key={idx} className="mb-2 pb-1 border-bottom" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-                <div className="d-flex justify-content-between">
-                    <span className="fw-bold" style={{ fontSize: '10px', color: 'var(--text-main)' }}>{c.perdoruesi}:</span>
+                <div className="d-flex justify-content-between align-items-center mb-1">
+                    <div className="d-flex align-items-center gap-1">
+                        {c.user_avatar ? (
+                            <img src={`http://localhost:5001/uploads/${c.user_avatar}`} className="rounded-circle object-fit-cover" style={{width: '14px', height: '14px'}} alt="avatar" />
+                        ) : (
+                            <span style={{fontSize:'10px'}}>👤</span>
+                        )}
+                        <span className="fw-bold" style={{ fontSize: '10px', color: 'var(--text-main)' }}>{c.perdoruesi}:</span>
+                    </div>
                     <span style={{ fontSize: '8px', color: 'var(--text-muted)' }}>{new Date(c.data).toLocaleDateString()}</span>
                 </div>
                 <p className="m-0" style={{ fontSize: '11px', lineHeight: '1.2', color: 'var(--text-light)' }}>{c.komenti}</p>
@@ -429,11 +468,38 @@ const ProjectDetails = () => {
                                                         <input type="file" className="form-control border-0 text-white" style={{fontSize:'9px', background: 'transparent'}} onChange={(e) => setSelectedFile({...selectedFile, [t.id]: e.target.files})} />
                                                         <button className="btn text-white border-start" style={{borderColor: 'rgba(255,255,255,0.1)', fontSize:'9px'}} onClick={() => handleFileUpload(t.id)}>📎</button>
                                                     </div>
-                                                    <div className="input-group input-group-sm">
+                                                <div className="input-group input-group-sm">
                                                         <input type="text" className="form-control border-0 text-white" placeholder="Shto koment..." style={{fontSize:'9px', background: 'transparent'}} value={commentText[t.id] || ''} onChange={(e) => setCommentText({...commentText, [t.id]: e.target.value})} />
                                                         <button className="btn btn-premium" onClick={() => handleAddComment(t.id)} style={{fontSize:'9px'}}>OK</button>
                                                     </div>
                                                 </div>
+                                                <div className="d-flex gap-1 mb-2">
+                                                    <div className="input-group input-group-sm">
+                                                        <input type="number" className="form-control border-0 text-white" placeholder="Minuta (p.sh 30)" style={{fontSize:'9px', background: 'transparent'}} value={timeLogMinutes[t.id] || ''} onChange={(e) => setTimeLogMinutes({...timeLogMinutes, [t.id]: e.target.value})} />
+                                                        <button className="btn text-white border-start" style={{borderColor: 'rgba(255,255,255,0.1)', fontSize:'9px', background: 'var(--accent)'}} onClick={() => handleAddTimeLog(t.id)}>⏳ Shto Kohë</button>
+                                                    </div>
+                                                </div>
+                                                
+                                                {/* --- LISTA E TIME LOGS --- */}
+                                                {t.time_logs && t.time_logs.length > 0 && (
+                                                    <div className="mt-2 mb-2 p-1 rounded-2 border-start border-2 border-success" style={{ background: 'rgba(0,0,0,0.1)' }}>
+                                                        <h6 style={{ fontSize: '8px', color: 'var(--text-muted)' }} className="fw-bold text-uppercase mb-1">Historiku i Kohës:</h6>
+                                                        {t.time_logs.map((log, idx) => (
+                                                            <div key={idx} className="d-flex justify-content-between align-items-center mb-1" style={{ fontSize: '9px', color: 'var(--text-light)' }}>
+                                                                <span className="d-flex align-items-center gap-1">
+                                                                    {log.user_avatar ? (
+                                                                        <img src={`http://localhost:5001/uploads/${log.user_avatar}`} className="rounded-circle object-fit-cover" style={{width: '12px', height: '12px'}} alt="avatar" />
+                                                                    ) : (
+                                                                        <span style={{fontSize:'9px'}}>👤</span>
+                                                                    )}
+                                                                    <strong className="text-white">{log.user_name}</strong> punoi {log.duration_minutes}m ({new Date(log.data).toLocaleDateString()})
+                                                                </span>
+                                                                <button onClick={() => handleDeleteTimeLog(log.id)} className="btn btn-link text-danger p-0 ms-2" style={{fontSize:'10px', textDecoration:'none'}} title="Fshi kohën">×</button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                
                                                 <div className="text-end">
                                                     <button className="btn btn-sm px-4 rounded-pill fw-bold btn-premium" style={{ fontSize: '10px' }} onClick={() => handleUpdateStatus(t.id, status === 'Done' ? 'To Do' : 'Done')}>
                                                         {status === 'Done' ? 'RIKTHE' : 'KRYE ✓'}
@@ -448,30 +514,6 @@ const ProjectDetails = () => {
                     ))}
                 </div>
                 </>
-                ) : (
-                <div className="premium-card p-4" style={{ overflowX: 'auto', background: 'var(--glass-bg)' }}>
-                    {ganttTasks.length > 0 ? (
-                        <div style={{ minWidth: '800px' }}>
-                            <Gantt 
-                                tasks={ganttTasks} 
-                                viewMode={ViewMode.Day}
-                                listCellWidth="155px"
-                                columnWidth={60}
-                                arrowColor="var(--accent)"
-                            />
-                            <style>{`
-                                /* Fix text color for Gantt */
-                                .gantt-task-react text { fill: #000 !important; }
-                                .gantt-task-react .bar-label { fill: #fff !important; font-weight: bold; }
-                                .gantt-task-react .grid-row { fill: transparent !important; }
-                            `}</style>
-                        </div>
-                    ) : (
-                        <div className="text-center p-5 text-muted small">
-                            Nuk ka detyra me data të përcaktuara për t'u shfaqur në Timeline. Sigurohuni që detyrat të kenë "Datë Fillimi" dhe "Datë Mbarimi".
-                        </div>
-                    )}
-                </div>
                 )}
                 {viewMode === 'burndown' && (
                     <div className="premium-card p-4">

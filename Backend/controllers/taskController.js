@@ -25,7 +25,7 @@ const getProjectTasks = async (req, res) => {
     try {
         const { id } = req.params;
         const sql = `
-            SELECT t.*, l.emertimi as label_emertimi, l.ngjyra, l.id as label_id, u.name as assigned_to_name
+            SELECT t.*, l.emertimi as label_emertimi, l.ngjyra, l.id as label_id, u.name as assigned_to_name, u.avatar_url as assigned_to_avatar
             FROM tasks t
             LEFT JOIN task_labels tl ON t.id = tl.task_id
             LEFT JOIN labels l ON tl.label_id = l.id
@@ -38,16 +38,25 @@ const getProjectTasks = async (req, res) => {
             // 1. Marrim Fotot
             const [photos] = await db.query("SELECT id, rruga FROM task_attachments WHERE task_id = ?", [task.id]);
             
-            // 2. Marrim Komentet (bashkojmë me tabelën users për me ia pa emrin)
+            // 2. Marrim Komentet (bashkojmë me tabelën users për me ia pa emrin dhe avatarin)
             const [comments] = await db.query(`
-                SELECT c.*, u.name as perdoruesi 
+                SELECT c.*, u.name as perdoruesi, u.avatar_url as user_avatar 
                 FROM task_comments c 
                 JOIN users u ON c.user_id = u.id 
                 WHERE c.task_id = ? 
                 ORDER BY c.data ASC`, 
             [task.id]);
 
-            return { ...task, attachments: photos || [], comments: comments || [] };
+            // 3. Marrim Time Logs (Koha e punës)
+            const [timeLogs] = await db.query(`
+                SELECT tl.*, u.name as user_name, u.avatar_url as user_avatar 
+                FROM time_logs tl 
+                JOIN users u ON tl.user_id = u.id 
+                WHERE tl.task_id = ? 
+                ORDER BY tl.data DESC`, 
+            [task.id]);
+
+            return { ...task, attachments: photos || [], comments: comments || [], time_logs: timeLogs || [] };
         }));
 
         res.status(200).json(tasksFullData);
