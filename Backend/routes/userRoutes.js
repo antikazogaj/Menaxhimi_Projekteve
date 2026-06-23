@@ -26,4 +26,19 @@ router.put('/:id/role', verifyToken, userController.updateRole);
 // DELETE http://localhost:5001/api/users/:id
 router.delete('/:id', verifyToken, userController.deleteUser);
 
+const multer = require('multer');
+const path = require('path');
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'uploads/'); // Sigurohu që ky folder ekziston në backend
+    },
+    filename: (req, file, cb) => {
+        cb(null, 'avatar-' + Date.now() + path.extname(file.originalname));
+    }
+});
+const upload = multer({ storage });
+
+// 6. Rruga për ngarkimin e avatarit
+router.post('/avatar', verifyToken, upload.single('avatar'), userController.uploadAvatar);
+
 module.exports = router;

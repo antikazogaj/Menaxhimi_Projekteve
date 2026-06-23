@@ -17,7 +17,7 @@ const User = {
         return result.insertId;
     },
     getAll: async () => {
-        const [rows] = await db.query("SELECT id, name, email, role FROM users");
+        const [rows] = await db.query("SELECT id, name, email, role, avatar_url FROM users");
         return rows;
     },
     updateRole: async (id, role) => {
@@ -25,6 +25,9 @@ const User = {
     },
     delete: async (id) => {
         await db.query("DELETE FROM users WHERE id = ?", [id]);
+    },
+    updateAvatar: async (id, avatar_url) => {
+        await db.query("UPDATE users SET avatar_url = ? WHERE id = ?", [avatar_url, id]);
     }
 };
 

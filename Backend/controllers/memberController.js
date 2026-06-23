@@ -42,7 +42,7 @@ const getProjectMembers = async (req, res) => {
     try {
         const { projectId } = req.params;
         const [members] = await db.query(
-            `SELECT users.id as user_id, users.name, users.email, project_members.roli_ne_projekt 
+            `SELECT users.id as user_id, users.name, users.email, users.avatar_url, project_members.roli_ne_projekt 
              FROM project_members 
              JOIN users ON project_members.user_id = users.id 
              WHERE project_members.project_id = ?`, [projectId]

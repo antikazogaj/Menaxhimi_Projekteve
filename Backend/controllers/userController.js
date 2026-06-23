@@ -17,7 +17,7 @@ const login = async (req, res) => {
         }
 
         const token = jwt.sign(
-            { id: user.id, name: user.name, role: user.role },
+            { id: user.id, name: user.name, role: user.role, avatar_url: user.avatar_url },
             process.env.JWT_SECRET,
             { expiresIn: '1d' }
         );
@@ -25,7 +25,8 @@ const login = async (req, res) => {
         res.status(200).json({ 
             token,
             role: user.role, 
-            name: user.name 
+            name: user.name,
+            avatar: user.avatar_url
         });
 
     } catch (error) {
@@ -85,4 +86,21 @@ const deleteUser = async (req, res) => {
     }
 };
 
-module.exports = { login, register, getUsers, updateRole, deleteUser };
+const uploadAvatar = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: "Nuk u gjet asnjë skedar" });
+        }
+        
+        const avatarUrl = req.file.filename;
+        const userId = req.user.id;
+
+        await User.updateAvatar(userId, avatarUrl);
+        res.status(200).json({ message: "Avatari u përditësua me sukses!", avatar_url: avatarUrl });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Gabim në server" });
+    }
+};
+
+module.exports = { login, register, getUsers, updateRole, deleteUser, uploadAvatar };
