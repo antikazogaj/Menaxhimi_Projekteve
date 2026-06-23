@@ -51,6 +51,7 @@ app.use('/api/sprints', require('./routes/sprintRoutes'));   // Menaxhon fazat (
 app.use('/api/activities', require('./routes/activityRoutes')); // Menaxhon historikun e aktiviteteve
 app.use('/api/attachments', require('./routes/attachmentRoutes')); // Menaxhon ngarkimin e file-ve
 app.use('/api', require('./routes/timeLogRoutes')); // Menaxhon regjistrimin e kohës
+app.use('/api/notifications', require('./routes/notificationRoutes')); // Menaxhon njoftimet
 app.use('/uploads', express.static('uploads'));
 
 const PORT = process.env.PORT || 5001;
