@@ -91,10 +91,11 @@ const Sidebar = () => {
     // ---------------------------
 
     const navItems = [
-        { path: '/', label: 'DASHBOARD', icon: '' },
-        { path: '/users', label: 'ANËTARËT', icon: '' },
-        { path: '/settings', label: 'KONFIGURIMET', icon: '' },
-        { path: '/reports', label: 'RAPORTET', icon: '' },
+        { path: '/', label: 'DASHBOARD', icon: '📊' },
+        { path: '/activities', label: 'HISTORIKU', icon: '🕵️‍♂️' },
+        { path: '/users', label: 'ANËTARËT', icon: '👥' },
+        { path: '/settings', label: 'KONFIGURIMET', icon: '⚙️' },
+        { path: '/reports', label: 'RAPORTET', icon: '📈' },
     ];
 
     return (

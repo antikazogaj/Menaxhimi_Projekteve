@@ -1,5 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
+// ============================================================================
+// LIBRARIA CHART.JS (Për Profesorin)
+// Këtu importojmë "Chart.js", një nga libraritë më të njohura për të vizatuar grafikë.
+// E kemi ndarë në pjesë (modulare) për të mos rënduar faqen: p.sh. 'ArcElement' vizaton
+// harqet (për formën e Donut/Rrethit), ndërsa 'BarElement' vizaton shtyllat (për grafikun e kohës).
+// ============================================================================
 import {
     Chart as ChartJS,
     ArcElement,
@@ -11,6 +17,7 @@ import {
 } from 'chart.js';
 import { Doughnut, Bar } from 'react-chartjs-2';
 
+// Këtu "regjistrojmë" pjesët e mësipërme që ChartJS të dijë t'i përdorë.
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
 // Plugin për tekstin në qendër të donut
@@ -55,13 +62,20 @@ const centerTextPlugin = {
 ChartJS.register(centerTextPlugin);
 
 const Reports = () => {
+    // --- STATE VARIABLES ---
+    // 'stats' mban numrin e detyrave të kryera dhe në pritje.
     const [stats, setStats] = useState({ done: 0, pending: 0 });
+    // 'timeStats' mban minutat e punuara për secilin përdorues.
     const [timeStats, setTimeStats] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [animVal, setAnimVal] = useState(0); // Për animacionin e përqindjes (nga 0 deri në x%)
-    const token = localStorage.getItem('token');
+    
+    // 'animVal' përdoret për të krijuar një efekt vizual interesant ku përqindja numërohet 1, 2, 3... deri në total.
+    const [animVal, setAnimVal] = useState(0); 
+    const token = localStorage.getItem('token'); // Marrim Tokenin për t'i provuar serverit që jemi kyçur
 
-    // Merr statistikat aktuale nga databaza për këtë përdorues
+    // --- MARRJA E TË DHËNAVE NGA DATABAZA ---
+    // Për Profesorin: Kjo ndodh sapo hapet faqja (useEffect me []). 
+    // Thërrasim dy "Endpointe" (dy rrugë) nga API-ja jonë në Backend.
     useEffect(() => {
         const fetchStats = async () => {
             try {
@@ -102,21 +116,27 @@ const Reports = () => {
         fetchTimeStats();
     }, [token]);
 
-    // Llogaritjet e Efikasitetit (rregulla treshe)
+    // --- LLOGARITJET MATEMATIKORE ---
     const total = stats.done + stats.pending;
+    // Rregulla e treshit: (Detyrat e kryera / Total) * 100 për të gjetur përqindjen e Efikasitetit
     const efficiency = total > 0 ? Math.round((stats.done / total) * 100) : 0;
 
-    // --- LOGJIKA E ANIMACIONIT (Rritja numërike nga 0 në X%) ---
+    // --- LOGJIKA E ANIMACIONIT TË PËRQINDJES ---
+    // Për Profesorin: Përdorim "setInterval" për të rritur numrin çdo 20 milisekonda.
+    // Kjo nuk është thjesht për t'u dukur bukur, por e bën UI-në (Interfejsin) të ndihet "Premium" dhe moderne.
     useEffect(() => {
         if (!loading) {
             let start = 0;
-            const step = Math.ceil(efficiency / 40);
+            const step = Math.ceil(efficiency / 40); // Hapi i rritjes
             const timer = setInterval(() => {
                 start += step;
-                if (start >= efficiency) { setAnimVal(efficiency); clearInterval(timer); }
+                if (start >= efficiency) { 
+                    setAnimVal(efficiency); // Ndalon kur arrin totalin
+                    clearInterval(timer); 
+                }
                 else setAnimVal(start);
             }, 20);
-            return () => clearInterval(timer);
+            return () => clearInterval(timer); // Pastron timer-in kur largohemi nga faqja
         }
     }, [loading, efficiency]);
 

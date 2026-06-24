@@ -4,40 +4,57 @@ import { Link } from 'react-router-dom';
 import AddProject from './AddProject';
 import DashboardStats from './DashboardStats';
 
+// ============================================================================
+// KOMPONENTI DASHBOARD (Faqja Kryesore)
+// Për Profesorin: Ky komponent përdor "Hooks" të React (useState dhe useEffect).
+// Qëllimi i tij është të marrë listën e projekteve dhe statistikat nga Backend-i
+// dhe t'i shfaqë ato në mënyrë vizuale sapo përdoruesi hyn në faqe.
+// ============================================================================
+
 const Dashboard = () => {
-    // --- STATE VARIABLES (Të dhënat që ndryshojnë në ekran) ---
-    // 'projects' ruan listën e projekteve. Fillon si një varg bosh []
+    // --- STATE VARIABLES (Gjendja e Aplikacionit) ---
+    // Për Profesorin: 'useState' është si një variabël inteligjente.
+    // Kur 'projects' ndryshon vlerë (psh. mbushet me të dhëna), React-i e vizaton 
+    // përsëri ekranin AUTOMATIKISHT për të shfaqur ndryshimin (Virtual DOM).
     const [projects, setProjects] = useState([]);
-    // 'stats' ruan numrat për vizualizimin e totalit të detyrave dhe atyre të përfunduara
+    
+    // Ruajmë statistikat për kartat e sipërme. Fillon me zëro.
     const [stats, setStats] = useState({ totalTasks: 0, completedTasks: 0 });
     
-    // Ky funksion merr të dhënat nga Backend
+    // Funksion Asinkron për të folur me databazën
     const fetchData = async () => {
         try {
-            // Promise.all lejon që të dërgojmë dy kërkesa në të njëjtën kohë (më e shpejtë)
+            // Për Profesorin: 'Promise.all' e bën sistemin shumë më të shpejtë!
+            // Në vend që t'i kërkoj projektet, të pres, dhe pastaj të kërkoj detyrat,
+            // unë i nis TË DYJA kërkesat paralelisht në të njëjtën kohë.
             const [resP, resT] = await Promise.all([
-                api.get('/api/projects'), // Merr projektet
-                api.get('/api/tasks/all/user').catch(() => ({ data: [] })) // Merr detyrat për statistikat
+                api.get('/api/projects'), // Lista e projekteve
+                api.get('/api/tasks/all/user').catch(() => ({ data: [] })) // Të gjitha detyrat për të nxjerrë totalin
             ]);
 
-            // Verifikojmë që përgjigjet janë Array (Vargje) për të mos pasur "crash"
+            // Sigurohemi që nëse serveri kthen gabim, të kemi një varg bosh [] në vend që t'i bëjmë "crash" aplikacionit.
             const projectsData = Array.isArray(resP.data) ? resP.data : [];
             const tasksData = Array.isArray(resT.data) ? resT.data : [];
 
-            // Përditësojmë pamjen në ekran (State-et)
+            // Përditësojmë States (Kjo shkakton rifreskim të pamjes)
             setProjects(projectsData);
             setStats({
                 totalTasks: tasksData.length,
-                completedTasks: tasksData.filter(t => t.statusi?.toLowerCase() === 'done').length // Numëron vetëm detyrat me status 'Done'
+                // Funksioni filter() kalon nëpër të gjitha detyrat dhe numëron vetëm ato që janë "Done"
+                completedTasks: tasksData.filter(t => t.statusi?.toLowerCase() === 'done').length 
             });
 
         } catch (e) { 
-            console.error("Gabim:", e); 
+            console.error("Gabim gjatë marrjes së të dhënave:", e); 
             setProjects([]);
         }
     };
 
-    // useEffect ekzekutohet vetëm një herë kur hapet faqja (për shkak të [] në fund)
+    // --- useEffect HOOK ---
+    // Për Profesorin: 'useEffect' është një "Cikël Jete" (Lifecycle method).
+    // Kur e le kllapën të zbrazët '[]' në fund, i them React-it:
+    // "Bëje 'fetchData' VETËM NJË HERË sapo hapet kjo faqe, dhe asnjëherë më!"
+    // Po të mos ishte [], do i bënte request serverit mijëra herë në sekondë duke e bllokuar (Infinite Loop).
     useEffect(() => {
         fetchData();
     }, []);

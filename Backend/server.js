@@ -1,34 +1,48 @@
-// dotenv përdoret për të lexuar variablat e mjedisit nga skedari .env (si fjalëkalimet e databazës)
+// ============================================================================
+// SERVER.JS - ZEMRA E BACKEND-IT (ENTRY POINT)
+// Për Profesorin: Ky është skedari kryesor që ndez serverin. Këtu konfigurohet 
+// gjithçka: libraritë, siguria, lidhja me bazën e të dhënave dhe rrugët (routes).
+// ============================================================================
+
+// dotenv lexon variablat nga skedari .env (fjalëkalimet e databazës, portet).
+// Pse? Që të mos i shkruajmë fjalëkalimet direkt në kod, për arsye sigurie.
 require('dotenv').config();
-const express = require('express');
-const mysql = require('mysql2');
-const cors = require('cors'); // Lejon kërkesat nga adresa të tjera (p.sh. nga React në portin 3000 te Backend në 5001)
-const path = require('path'); 
+const express = require('express'); // Express është korniza (framework) bazë që na lejon të krijojmë API-në shumë lehtë.
+const mysql = require('mysql2'); // mysql2 është libraria që lidh Node.js me bazën e të dhënave MySQL.
+const cors = require('cors'); // CORS (Cross-Origin Resource Sharing) lejon Frontendin (React) të flasë me Backendin.
+const path = require('path'); // Ndihmon për të punuar me shtigjet e skedarëve (files) në kompjuter.
 
 const app = express();
 
 // --- MIDDLEWARES (Ndërmjetësit) ---
-// Aktivizojmë CORS për të lejuar komunikimin Frontend-Backend
+// Për Profesorin: Middleware janë funksione që ekzekutohen çdo herë që vjen një kërkesë e re në server,
+// PARA se kërkesa të shkojë te "Route" specifik (psh. /api/users).
+
+// Aktivizojmë CORS për të mos marrë "Blocked by CORS policy" në shfletues kur React flet me Node.
 app.use(cors());
-// Lejon serverin të kuptojë të dhënat që vijnë në formatin JSON
+
+// Lejon serverin të "kuptojë" (parse) të dhënat që i vijnë në formatin JSON nga format e Frontend-it.
 app.use(express.json());
 
-// Logs për të parë çdo kërkesë në terminal
+// Middleware i personalizuar për LOGS (Gjurmimi i kërkesave)
+// Pse? Kjo na ndihmon të shohim çdo veprim që ndodh live në terminal (psh. "GET në /api/tasks") për debugging.
 app.use((req, res, next) => {
     console.log(`>>> Kërkesë e re: ${req.method} në ${req.url}`);
-    next();
+    next(); // 'next' i thotë serverit: "Vazhdo me hapin tjetër"
 });
 
-// SHTESA: Bëjmë folderin 'uploads' të qasshëm nga interneti (këtu ruhen skedarët e bashkëngjitur)
+// Bëjmë folderin 'uploads' "statik" (të qasshëm nga interneti pa patur nevojë për kod).
+// Pse? Që fotot e profilit dhe skedarët të ngarkohen direkt në React nga URL: http://localhost:5001/uploads/...
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // --- LIDHJA ME DATABAZËN ---
-// Krijojmë lidhjen me MySQL duke përdorur të dhënat nga skedari .env për siguri
+// Për Profesorin: Krijojmë një lidhje (Connection) me databazën. Ne marrim detajet nga .env,
+// që do të thotë që ky kod funksionon njëlloj si në server lokal ashtu edhe kur hidhet live në internet, pa ndryshuar kodin!
 const db = mysql.createConnection({
-    host: process.env.DB_HOST,         // p.sh. localhost
-    user: process.env.DB_USER,         // p.sh. root
-    password: process.env.DB_PASS,     // fjalëkalimi
-    database: process.env.DB_NAME      // emri i databazës (taskmanagerdb)
+    host: process.env.DB_HOST,         
+    user: process.env.DB_USER,         
+    password: process.env.DB_PASS,     
+    database: process.env.DB_NAME      
 });
 
 db.connect((err) => {
@@ -39,21 +53,25 @@ db.connect((err) => {
     console.log(' Sukses: U lidhëm me databazën përmes .env!');
 });
 
-// --- ROUTES (Rrugët e API-së) ---
-// Këtu përcaktojmë se cilët kontrollera do të përdoren për rrugë të ndryshme
-app.use('/api/projects', require('./routes/projectRoutes')); // Menaxhon projektet
-app.use('/api/users', require('./routes/userRoutes'));       // Menaxhon përdoruesit (login/register)
-app.use('/api/tasks', require('./routes/taskRoutes'));       // Menaxhon detyrat (Gantt, statuset)
-app.use('/api/members', require('./routes/memberRoutes'));   // Menaxhon anëtarët e projektit
-app.use('/api/labels', require('./routes/labelRoutes'));     // Menaxhon etiketat
-app.use('/api/comments', require('./routes/commentRoutes')); // Menaxhon komentet në detyra
-app.use('/api/sprints', require('./routes/sprintRoutes'));   // Menaxhon fazat (Burndown chart)
-app.use('/api/activities', require('./routes/activityRoutes')); // Menaxhon historikun e aktiviteteve
-app.use('/api/attachments', require('./routes/attachmentRoutes')); // Menaxhon ngarkimin e file-ve
-app.use('/api', require('./routes/timeLogRoutes')); // Menaxhon regjistrimin e kohës
-app.use('/api/notifications', require('./routes/notificationRoutes')); // Menaxhon njoftimet
+// --- ROUTES (Rrugët e API-së / Endpoints) ---
+// Për Profesorin: Këtu bëhet "Routing". Në vend që ta mbajmë të gjithë kodin në këtë skedar (që do e bënte mijëra rreshta),
+// ne e kemi ndarë në module sipas "Separation of Concerns" (Ndarja e Detyrave).
+// Çdo rrugë merret nga folderi 'routes'.
+
+app.use('/api/projects', require('./routes/projectRoutes')); // Menaxhon API-në për projektet
+app.use('/api/users', require('./routes/userRoutes'));       // Regjistrimi, Login, dhe përdoruesit
+app.use('/api/tasks', require('./routes/taskRoutes'));       // Krijimi/Fshirja e detyrave
+app.use('/api/members', require('./routes/memberRoutes'));   // Anëtarët brenda një projekti
+app.use('/api/labels', require('./routes/labelRoutes'));     // Etiketat (Labels) si Bug, Feature
+app.use('/api/comments', require('./routes/commentRoutes')); // Komentet në çdo detyrë
+app.use('/api/sprints', require('./routes/sprintRoutes'));   // Fazat (Sprints) për metodologjinë Agile
+app.use('/api/activities', require('./routes/activityRoutes')); // Historiku i veprimeve (Kush bëri çfarë)
+app.use('/api/attachments', require('./routes/attachmentRoutes')); // Ngarkimi i skedarëve tek detyra
+app.use('/api', require('./routes/timeLogRoutes')); // Logimi i kohës së shpenzuar (Orët e punës)
+app.use('/api/notifications', require('./routes/notificationRoutes')); // Sistemi Real-time i Njoftimeve
 app.use('/uploads', express.static('uploads'));
 
+// Nisim serverin të "dëgjojë" për kërkesa
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
     console.log(` Serveri po punon në portin ${PORT}`);

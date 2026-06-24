@@ -2,43 +2,57 @@ import React, { useState } from 'react';
 import api from '../api';
 import { useNavigate, Link } from 'react-router-dom';
 
+// ============================================================================
+// FAQJA E KYÇJES (Login Component - React)
+// Për Profesorin: Kjo faqe trajton kyçjen e përdoruesit dhe ruajtjen e sesionit.
+// Koncepti kryesor këtu është "State Management" (menaxhimi i gjendjes) me useState
+// dhe "JWT Token Storage" (ruajtja e tokenit të sigurisë).
+// ============================================================================
+
 const Login = () => {
-    // Ruajmë emailin dhe fjalëkalimin që shkruan përdoruesi
+    // useState është një "kujtesë afatshkurtër" e komponentit.
+    // Ruajmë emailin dhe fjalëkalimin sa herë që përdoruesi shtyp një shkronjë.
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false); // Për të treguar gjendjen "Duke u kyçur..."
-    const navigate = useNavigate();
+    const [loading, setLoading] = useState(false); // Ndihmon për të treguar një animacion gjatë pritjes
+    const navigate = useNavigate(); // Funksion për të ndërruar faqet (psh. nga Login te Dashboard)
 
-    // Ky funksion thirret kur shtypet butoni 'Kyçu Tani'
+    // Funksioni që ekzekutohet kur shtypet "Kyçu Tani"
     const handleLogin = async (e) => {
-        e.preventDefault(); // Ndalon rifreskimin e faqes kur bëjmë Submit
+        // Pse e.preventDefault()? Sepse formulari (form) normalisht i bën refresh gjithë faqes,
+        // por ne duam të bëjmë një kërkesë të fshehtë (AJAX) në prapaskenë pa rimbushur faqen.
+        e.preventDefault(); 
         setLoading(true);
         try {
-            localStorage.clear(); // Pastrojmë të dhënat e vjetra (nëse ka mbetur ndonjë sesion i vjetër)
+            // Fshijmë çdo të dhënë të mbetur nga ndonjë përdorues tjetër më parë
+            localStorage.clear(); 
             
-            // Dërgojmë kërkesën tek Backend (Express) për verifikim
+            // Komunikojmë me Backend (API-në tonë në Node.js)
             const response = await api.post('/api/users/login', { email, password });
             
-            // Nëse kredencialet janë të sakta, serveri kthen një Token (pasaportë dixhitale)
+            // Nëse përgjigja përmban "token", do të thotë që u kyçëm me sukses!
             if (response.data.token) {
-                // E ruajmë token-in lokalisht që mos t'ia kërkojmë prapë përdoruesit
+                // Për Profesorin: "localStorage" është një memorie e shfletuesit.
+                // Ruajmë aty token-in që ta dërgojmë automatikisht te çdo kërkesë e ardhshme (psh. kur krijojmë detyrë).
                 localStorage.setItem('token', response.data.token);
-                localStorage.setItem('role', response.data.role); // Roli (P.sh. Admin ose User)
+                localStorage.setItem('role', response.data.role); // Roli (Admin/Member) përdoret për të fshehur disa butona.
                 localStorage.setItem('userName', response.data.name);
                 localStorage.setItem('avatar', response.data.avatar);
                 
-                // Pas kyçjes së suksesshme, e kalojmë tek Dashboard (faqja kryesore)
+                // Pasi çdo gjë është ruajtur, e dërgojmë përdoruesin në faqen kryesore '/'
                 window.location.href = '/'; 
             } else {
                 alert(" Gabim: Serveri nuk dërgoi të dhënat e sakta.");
             }
         } catch (error) {
-            // Nëse marrim 401 (Unauthorized) ose ndonjë gabim tjetër
+            // Kapim gabimet që kthen Backend-i (p.sh. statusin 401 Unauthorized për fjalëkalim të gabuar)
             console.error("Detajet e gabimit:", error.response?.data);
             const msg = error.response?.data?.message || "Email ose fjalëkalim i gabuar!";
             alert("❌ " + msg);
         } finally {
-            setLoading(false); // Ndalim rrotullimin (loading) pavarësisht rezultatit
+            // "finally" ekzekutohet gjithmonë në fund, pavarësisht a patëm sukses apo gabim.
+            // E heqim gjendjen e ngarkimit (loading).
+            setLoading(false); 
         }
     };
 

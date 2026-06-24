@@ -8,17 +8,19 @@ const api = axios.create({
     baseURL: API_BASE,
 });
 
-// --- INTERCEPTOR I KËRKESAVE ---
-// Kjo logjikë ekzekutohet PARA se çdo kërkesë të niset drejt Backend-it
+// --- INTERCEPTOR I KËRKESAVE (Request Interceptor) ---
+// Për Profesorin: Kjo është si një "postbllok policie" që kontrollon çdo kërkesë PARA se të niset nga Frontend për në Backend.
+// Pse e përdorim? Sepse në vend që t'i ngjisim Token-in manualisht në çdo API call (kemi 50+ të tilla),
+// ky Interceptor e bën automatikisht për çdo kërkesë!
 api.interceptors.request.use(
     (config) => {
-        // Marrim token-in nga 'localStorage' i shfletuesit
+        // 1. Marrim Token-in nga memori i shfletuesit (që e ruajtëm gjatë Login)
         const token = localStorage.getItem('token');
         if (token) {
-            // Ia bashkëngjisim kërkesës në mënyrë automatike
+            // 2. Ia ngjisim në "Kapak" (Header) në formatin "Bearer kodi..."
             config.headers['Authorization'] = `Bearer ${token}`;
         }
-        return config;
+        return config; // Lejon kërkesën të niset
     },
     (error) => Promise.reject(error)
 );
