@@ -298,14 +298,29 @@ const ProjectDetails = () => {
                     <div className="col-md-7">
                         <div className="premium-card p-4 h-100">
                             <h6 className="fw-bold small text-uppercase mb-3" style={{ fontSize: '11px', color: 'var(--accent)', letterSpacing: '1px' }}> AKTIVITETET</h6>
-                            <div className="d-flex gap-3 overflow-auto pb-2 no-scrollbar">
-                                {activities.slice(0, 5).map((a, i) => (
-                                    <div key={i} className="flex-shrink-0 p-3 rounded-3 border-start border-4 border-primary" style={{ minWidth: '140px', background: 'rgba(0,0,0,0.2)', boxShadow: 'var(--shadow-sm)' }}>
-                                        <div className="fw-bold" style={{ fontSize: '9px', whiteSpace:'nowrap', color: 'var(--text-main)' }}>{a.veprimi}</div>
-                                        <div style={{ fontSize: '8px', color: 'var(--text-muted)' }}>{new Date(a.data).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
-                                    </div>
-                                ))}
-                            </div>
+                            {activities.length === 0 ? (
+                                <div className="text-center p-3 text-muted" style={{ fontSize: '11px', background: 'rgba(0,0,0,0.1)', borderRadius: '10px' }}>
+                                    Nuk ka aktivitete ende.
+                                </div>
+                            ) : (
+                                <div className="d-flex gap-3 overflow-auto pb-2 no-scrollbar">
+                                    {activities.slice(0, 10).map((a, i) => (
+                                        <div key={i} className="flex-shrink-0 p-3 rounded-3 border-start border-4 border-primary" style={{ minWidth: '160px', maxWidth: '200px', background: 'rgba(0,0,0,0.2)', boxShadow: 'var(--shadow-sm)' }}>
+                                            <div className="d-flex align-items-center gap-2 mb-1">
+                                                {a.avatar ? (
+                                                    <img src={`http://localhost:5001/uploads/${a.avatar}`} className="rounded-circle object-fit-cover" style={{width: '14px', height: '14px'}} alt="avatar" />
+                                                ) : (
+                                                    <span style={{fontSize:'12px'}}>👤</span>
+                                                )}
+                                                <span className="fw-bold" style={{ fontSize: '9px', color: 'var(--text-main)' }}>{a.user_name || 'Përdoruesi'}</span>
+                                            </div>
+                                            <div className="fw-bold text-primary mb-1" style={{ fontSize: '10px', whiteSpace:'normal' }}>{a.veprimi}</div>
+                                            <div style={{ fontSize: '9px', color: 'var(--text-light)', marginBottom: '5px', whiteSpace: 'normal', lineHeight: '1.2' }}>{a.pershkrimi}</div>
+                                            <div style={{ fontSize: '8px', color: 'var(--text-muted)' }}>{new Date(a.data).toLocaleDateString()} {new Date(a.data).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
